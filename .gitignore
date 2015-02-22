@@ -1,0 +1,5 @@
+/workspace.xml
+*.spyderproject
+*.wpu
+*.wpr
+/.idea/
