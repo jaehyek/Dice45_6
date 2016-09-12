@@ -288,19 +288,28 @@ if __name__ == "__main__":
     # print modbalance with all of inning
     listdictinningmods = tableinningno.getlistdictModBalanceWithTable()
     pprint.pprint(listdictinningmods, width=200)
-
+    # print("-------------------------------------------------------")
+    # # 6개의 조합이 반복으로 나왔는지 확인. --> 결론 : 그런 경우는 없음.
+    # lenlistlist = len(listlistinningnos)
+    # for inningx in range(1,lenlistlist+1) :
+    #     for inningy in range(inningx+1, lenlistlist+1) :
+    #         if tableinningno.getNosWithInning(inningx) == tableinningno.getNosWithInning(inningy) :
+    #             print("Found 6pair is same")
+    #
+    # exit()
     print("-------------------------------------------------------")
     # 4 pair combination이 tableinningno에서 발견된 회수중 최고의 회수는 ?
     listnos = [ aa for aa in range(1,MAXNO+1)]
-    intcombination = 4
+    intcombination = 5
     intmax = 0
     listturplecombi = [aa for aa in itertools.combinations(listnos, intcombination )]
     lencombi = len(listturplecombi)
+    print("total combination = %s"% lencombi)
     loopop = 0
     for tuplecombi in  listturplecombi:
         loopop += 1
-        # if loopop % 100 == 0 :
-            # print("looping %s/%s"%(loopop, lencombi))
+        if loopop % 10000 == 0 :
+            print("looping %s/%s"%(loopop, lencombi))
         inttemp, _ = tableinningno.getMatchingCombiCount(tuplecombi)
         if inttemp > intmax :
             intmax = inttemp
@@ -312,8 +321,8 @@ if __name__ == "__main__":
     loopop = 0
     for tuplecombi in  listturplecombi:
         loopop += 1
-        # if loopop % 100 == 0 :
-            # print("looping %s/%s"%(loopop, lencombi))
+        if loopop % 10000 == 0 :
+            print("looping %s/%s"%(loopop, lencombi))
         inttemp, listinning = tableinningno.getMatchingCombiCount(tuplecombi)
         if inttemp == intmax :
             listmaxmatchcombi.append(tuplecombi)
