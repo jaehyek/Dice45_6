@@ -8,35 +8,53 @@ MAXDIFFINNING = 60
 
 class TableInningNo():
     def __init__(self, filecsv):
-        listlistInningNos = []
+        self.listlistinningnos = []
+        self.tupleNoFreqSorted = []
+        self.listdictinningmods = []
+
         for line in open(filecsv):
             listno = [int(aa) for aa in line.split(",")]
-            listlistInningNos.append( listno )
+            self.listlistinningnos.append( listno )
 
         # sorting based on inning
-        self.listlistInningNos = sorted(listlistInningNos, key=lambda listInningNos: listInningNos[0] )
+        self.listlistinningnos = sorted(self.listlistinningnos, key=lambda listInningNos: listInningNos[0] )
+        self.createlistdictModBalanceWithTable()
+        self.createlisttupleNoFreqSorted()
 
     def getlistlistInningNos(self):
-        return self.listlistInningNos
+        return self.listlistinningnos
 
     def getNosWithInning(self, inning):
-        return self.listlistInningNos[inning-1][1:]
+        return self.listlistinningnos[inning-1][1:]
 
-    def getlisttupleNoFreq(self):
+    def createlisttupleNoFreqSorted(self):
         dictNumFreq = {}
         for i in range(1,MAXNO+1 ):
             dictNumFreq[i] = 0
 
-        for listno in self.listlistInningNos:
+        for listno in self.listlistinningnos:
             for no in listno[1:]:
                 dictNumFreq[int(no)] += 1
 
-        return dictNumFreq.items()
+        tupleNoFreqSorted =  dictNumFreq.items()
+
+        # 당점된 횟수가 많은 것 부터 나열하기.
+        self.tupleNoFreqSorted = sorted( tupleNoFreqSorted, key=lambda tupleNoFreq: tupleNoFreq[1], reverse=True)
+
+    def getlisttupleNoFreqSorted(self):
+        return self.tupleNoFreqSorted
+
+    def writelisttupleNoFreqSorted(self, filecsv='NoFreq.csv'):
+        f = open(filecsv, 'w' )
+        f.write("No,Frequence,\n")
+        for tupleNoFreq in self.tupleNoFreqSorted :
+            f.write(",".join([str(aa) for aa in tupleNoFreq]) + "\n")
+        f.close()
 
     def getMatchingCombiCount(self, listNos):
         matchingcount = 0
         listmatchinning = []
-        for listInningNos in self.listlistInningNos :
+        for listInningNos in self.listlistinningnos :
             listbools = []
             for no in listNos :
                 listbools.append(no in listInningNos[1:])
@@ -112,16 +130,16 @@ class TableInningNo():
     def getdictModBalanceWithInning(self, inning):
         dicttemp = {}
         dicttemp["inning"] = inning
-        dicttemp["mod2"] = self.getMod2Balance(self.listlistInningNos[inning -1][1:])
-        dicttemp["mod3"] = self.getMod3Balance(self.listlistInningNos[inning -1][1:])
-        dicttemp["mod5"] = self.getMod5Balance(self.listlistInningNos[inning -1][1:])
-        dicttemp["mod9"] = self.getMod9Balance(self.listlistInningNos[inning -1][1:])
+        dicttemp["mod2"] = self.getMod2Balance(self.listlistinningnos[inning -1][1:])
+        dicttemp["mod3"] = self.getMod3Balance(self.listlistinningnos[inning -1][1:])
+        dicttemp["mod5"] = self.getMod5Balance(self.listlistinningnos[inning -1][1:])
+        dicttemp["mod9"] = self.getMod9Balance(self.listlistinningnos[inning -1][1:])
         dicttemp["modsum"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
         return dicttemp
 
-    def getlistdictModBalanceWithTable(self):
+    def createlistdictModBalanceWithTable(self):
         listdictinningmods = []
-        for listinningnos in listlistinningnos :
+        for listinningnos in self.listlistinningnos :
             dicttemp = {}
             dicttemp["inning"] = listinningnos[0]
             dicttemp["mod2"] = self.getMod2Balance(listinningnos[1:])
@@ -129,9 +147,109 @@ class TableInningNo():
             dicttemp["mod5"] = self.getMod5Balance(listinningnos[1:])
             dicttemp["mod9"] = self.getMod9Balance(listinningnos[1:])
             dicttemp["modsum"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
+            dicttemp["sum"] = sum(listinningnos[1:])
             listdictinningmods.append(dicttemp)
 
-        return listdictinningmods
+        self.listdictinningmods = listdictinningmods
+
+    def getlistdictModBalanceWithTable(self):
+        return self.listdictinningmods
+
+    def writelistdictModBalanceWithTable(self, filecsv='modbal.csv'):
+        f = open(filecsv, 'w')
+        f.write("inning,no1,no2,no3,no4,no5,no6,mod2,mod3,mod5,mod9,modsum,sum\n")
+        leninningnos = len(self.listlistinningnos)
+        for idx in range(leninningnos) :
+            f.write(",".join([str(aa)for aa in self.listlistinningnos[idx] ]) + ",")
+            dicttemp = self.listdictinningmods[idx]
+            f.write(str(dicttemp["mod2"]) + ",")
+            f.write(str(dicttemp["mod3"]) + ",")
+            f.write(str(dicttemp["mod5"]) + ",")
+            f.write(str(dicttemp["mod9"]) + ",")
+            f.write(str(dicttemp["modsum"]) + ",")
+            f.write(str(dicttemp["sum"]) + "\n")
+        f.close()
+
+    def writeCombiMatchwithTable(self, combi, filecsv='combimatch.csv'):
+        filecsv = (str(combi) + ".").join(filecsv.split("."))
+        listlistmax = []
+        listlistmax_1 = []
+        lenmax = 0
+        lenmax_1 = 0
+        lenlistlistinningnos = len(self.listlistinningnos)
+        for idx in range(lenlistlistinningnos) :
+            if idx % 100 == 0  :
+                print("\n")
+            print(".", end="")
+            listidx2 = [aa for aa in range(lenlistlistinningnos)]
+            listidx2.remove(idx)
+            listfindturplecombi = [bb for bb in itertools.combinations(self.listlistinningnos[idx][1:], combi )]
+            for findtuplecombi in listfindturplecombi :
+                # check it findtuplecombi is already found and recorded in list  listlistmax and listlistmax_1, if then, skip .
+                boolexist = False
+                for inncombi in listlistmax :
+                    if list(findtuplecombi) == inncombi[1:] :
+                        boolexist = True
+                        break
+                for inncombi in listlistmax_1 :
+                    if list(findtuplecombi) == inncombi[1:] :
+                        boolexist = True
+                        break
+                if boolexist == True :
+                    continue
+
+                listfoundcombiidxs = []
+                for idx2 in listidx2 :
+                    if set(findtuplecombi).issubset(self.listlistinningnos[idx2][1:]) :
+                        listfoundcombiidxs.append(idx2 )
+                lenfound = len(listfoundcombiidxs)
+                if lenfound >= 1 :
+                    # add itself.
+                    listfoundcombiidxs.insert(0,idx )
+                    listfoundcombiidxs.insert(0,findtuplecombi)
+                    lenfound += 1
+
+                if lenfound > lenmax :
+                    lenmax_1 = lenmax
+                    lenmax = lenfound
+                    listlistmax_1 = listlistmax
+                    listlistmax = listfoundcombiidxs
+                    continue
+                elif lenfound == lenmax :
+                    listlistmax.append( listfoundcombiidxs)
+                    continue
+                elif lenfound == lenmax_1 :
+                    listlistmax_1.append( listfoundcombiidxs)
+                    continue
+                else:
+                    continue
+        print("\n")
+        f = open(filecsv, 'w')
+        strcombi = ["C" + str(aa) for aa in range(1,combi+1)]
+        strdiffno = ["D" + str(aa) for aa in range(1, 6-combi + 1 )]
+        f.write("countfound" + ",".join(strcombi) + "," + "order,inning,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "\n")
+        for listcombiidxs in listlistmax :
+            listcombi = list(listcombiidxs[0])
+            order = 1
+            for idxs in listcombiidxs[1:] :
+                listnos = self.listlistinningnos[idxs][1:]
+                f.write(str(lenmax) + ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
+                f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
+                f.write(",".join([str(aa) for aa in list(set(listnos)-set(listcombi))]) + "\n")
+                order += 1
+
+        for listcombiidxs in listlistmax_1 :
+            listcombi = list(listcombiidxs[0])
+            order = 1
+            for idxs in listcombiidxs[1:] :
+                listnos = self.listlistinningnos[idxs][1:]
+                f.write(str(lenmax) + ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
+                f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
+                f.write(",".join([str(aa) for aa in list(set(listnos)-set(listcombi))]) + "\n")
+                order += 1
+
+        f.close()
+
 
 class Closeness():
     def __init__(self):
@@ -218,9 +336,6 @@ class Closeness():
                 totalcloseness += self.getcloseness(no1, no2)
         return totalcloseness
 
-
-
-
 class   calNextSelectionStat():
     def __init__(self):
         dictdictdiffInning = {}
@@ -240,8 +355,6 @@ class   calNextSelectionStat():
             outstring += str(no)+":"+ str(listRankingNumDiffinning) + "\n"
 
         return outstring
-
-
 
     def makenextInning(self,listlistInningNos ):
         # 주어진 입력으로, 각 번호별 회차차이에 대한 발생회수더하고, 저장.
@@ -270,82 +383,22 @@ class   calNextSelectionStat():
                 listturpleNumInningOccurs.append((no, diffinning,self.dictdictdiffInning[no][diffinning] ))
         return listturpleNumInningOccurs
 
-
-
 if __name__ == "__main__":
 
     tableinningno = TableInningNo("lotto.csv")
     listlistinningnos = tableinningno.getlistlistInningNos()      # 차수, 당첨번호 list
-    listtupleNoFreq = tableinningno.getlisttupleNoFreq()      #  listtuple (당첨번호, 당첨회수 )
 
-    # 당점된 횟수가 많은 것 부터 나열하기.
-    listRankingNoFreq = sorted( listtupleNoFreq, key=lambda tupleNoFreq: tupleNoFreq[1], reverse=True)
-    print ( "listRankingNoFreq :" )
-    pprint.pprint ( listRankingNoFreq )
-
-    print("-------------------------------------------------------")
+    # tableinningno.writelisttupleNoFreqSorted()
+    # tableinningno.writelistdictModBalanceWithTable()
 
     # print modbalance with all of inning
-    listdictinningmods = tableinningno.getlistdictModBalanceWithTable()
-    pprint.pprint(listdictinningmods, width=200)
-    # print("-------------------------------------------------------")
-    # # 6개의 조합이 반복으로 나왔는지 확인. --> 결론 : 그런 경우는 없음.
-    # lenlistlist = len(listlistinningnos)
-    # for inningx in range(1,lenlistlist+1) :
-    #     for inningy in range(inningx+1, lenlistlist+1) :
-    #         if tableinningno.getNosWithInning(inningx) == tableinningno.getNosWithInning(inningy) :
-    #             print("Found 6pair is same")
-    #
-    # exit()
-    print("-------------------------------------------------------")
-    # 4 pair combination이 tableinningno에서 발견된 회수중 최고의 회수는 ?
-    listnos = [ aa for aa in range(1,MAXNO+1)]
-    intcombination = 5
-    intmax = 0
-    listturplecombi = [aa for aa in itertools.combinations(listnos, intcombination )]
-    lencombi = len(listturplecombi)
-    print("total combination = %s"% lencombi)
-    loopop = 0
-    for tuplecombi in  listturplecombi:
-        loopop += 1
-        if loopop % 10000 == 0 :
-            print("looping %s/%s"%(loopop, lencombi))
-        inttemp, _ = tableinningno.getMatchingCombiCount(tuplecombi)
-        if inttemp > intmax :
-            intmax = inttemp
-    print("max matching Number is %s"%intmax)
+    # listdictinningmods = tableinningno.getlistdictModBalanceWithTable()
+    # pprint.pprint(listdictinningmods, width=200)
 
-    listmaxmatchcombi = []
-    listmax_1matchcombi = []
-
-    loopop = 0
-    for tuplecombi in  listturplecombi:
-        loopop += 1
-        if loopop % 10000 == 0 :
-            print("looping %s/%s"%(loopop, lencombi))
-        inttemp, listinning = tableinningno.getMatchingCombiCount(tuplecombi)
-        if inttemp == intmax :
-            listmaxmatchcombi.append(tuplecombi)
-
-            print("*** max matching combination is %s"% str( tuplecombi ))
-            #print the modbalance of nos
-            for inning in listinning :
-                nos = tableinningno.getNosWithInning(inning)
-                print("inning = %s , nos=%s, modbalance=%s"%(inning,nos, tableinningno.getdictModBalanceWithInning(inning) ))
-
-        elif inttemp == intmax-1 :
-            listmax_1matchcombi.append(tuplecombi)
-        else :
-            continue
-
-    print("Max Matching turple is ")
-    pprint.pprint(listmaxmatchcombi)
-
-    print("Max-1 Matching turple is ")
-    pprint.pprint(listmax_1matchcombi)
-
-
+    tableinningno.writeCombiMatchwithTable(5)
     exit()
+
+
 
     # 각 회차에서 같이 나왔던 회수 구하기.(친밀성 구하기 )
     closeness = Closeness()
@@ -357,9 +410,10 @@ if __name__ == "__main__":
     closeness.CreatelistlistCloseness2pair()
     # pprint.pprint ( ListCloseness2pair )
 
+    tupleNoFreqSorted = tableinningno.getlisttupleNoFreqSorted()      #  listtuple (당첨번호, 당첨회수 )
     # 1. 당첨회수가 많은 숫자와  1차 pair와 2차 pair .
     listdictFreqCloseClose=[]
-    for NoFreq in listRankingNoFreq[0:3 ] :
+    for NoFreq in tupleNoFreqSorted[0:3 ] :
         for listcloseness2pairFirst in closeness.getlistFoundFromListCloseness2pair(NoFreq[0],0, depth=2)[:10] :
             # Fstcloseness2pair : First order closeness2pair
             closeness2pairFirst_No = listcloseness2pairFirst[1] if listcloseness2pairFirst[1] != NoFreq[0] else listcloseness2pairFirst[2]
