@@ -170,7 +170,7 @@ class TableInningNo():
             f.write(str(dicttemp["sum"]) + "\n")
         f.close()
 
-    def writeCombiMatchwithTable(self, combi, filecsv='combimatch.csv'):
+    def writeCombiMatchwithTable(self, combi, closeness, filecsv='combimatch.csv'):
         filecsv = (str(combi) + ".").join(filecsv.split("."))
         listlistmax = []
         listlistmax_1 = []
@@ -187,12 +187,12 @@ class TableInningNo():
             for findtuplecombi in listfindturplecombi :
                 # check it findtuplecombi is already found and recorded in list  listlistmax and listlistmax_1, if then, skip .
                 boolexist = False
-                for inncombi in listlistmax :
-                    if list(findtuplecombi) == inncombi[1:] :
+                for combiidxs in listlistmax :
+                    if findtuplecombi == combiidxs[0] :
                         boolexist = True
                         break
-                for inncombi in listlistmax_1 :
-                    if list(findtuplecombi) == inncombi[1:] :
+                for combiidxs in listlistmax_1 :
+                    if findtuplecombi == combiidxs[0] :
                         boolexist = True
                         break
                 if boolexist == True :
@@ -203,6 +203,8 @@ class TableInningNo():
                     if set(findtuplecombi).issubset(self.listlistinningnos[idx2][1:]) :
                         listfoundcombiidxs.append(idx2 )
                 lenfound = len(listfoundcombiidxs)
+                if lenfound == 0 :
+                    continue
                 if lenfound >= 1 :
                     # add itself.
                     listfoundcombiidxs.insert(0,idx )
@@ -213,7 +215,7 @@ class TableInningNo():
                     lenmax_1 = lenmax
                     lenmax = lenfound
                     listlistmax_1 = listlistmax
-                    listlistmax = listfoundcombiidxs
+                    listlistmax = [listfoundcombiidxs]
                     continue
                 elif lenfound == lenmax :
                     listlistmax.append( listfoundcombiidxs)
@@ -225,17 +227,31 @@ class TableInningNo():
                     continue
         print("\n")
         f = open(filecsv, 'w')
+
         strcombi = ["C" + str(aa) for aa in range(1,combi+1)]
         strdiffno = ["D" + str(aa) for aa in range(1, 6-combi + 1 )]
-        f.write("countfound" + ",".join(strcombi) + "," + "order,inning,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "\n")
+        f.write("countfound" +","+ ",".join(strcombi) + "," + "order,inning,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "," )
+        if closeness != None :
+            lendiffcombi = len([aa for aa in itertools.combinations(range(6-combi),2 )])
+            strdiffnoclose = [ "DClo" + str(aa) for aa in range(lendiffcombi)]
+            f.write(",".join(strdiffnoclose) + ",")
+        f.write("\n")
+
         for listcombiidxs in listlistmax :
             listcombi = list(listcombiidxs[0])
             order = 1
             for idxs in listcombiidxs[1:] :
                 listnos = self.listlistinningnos[idxs][1:]
-                f.write(str(lenmax) + ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
+                f.write(str(lenmax) + ","+ ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
                 f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
-                f.write(",".join([str(aa) for aa in list(set(listnos)-set(listcombi))]) + "\n")
+                listtemp = list(set(listnos)-set(listcombi))
+                listtemp.sort()
+                f.write(",".join([str(aa) for aa in listtemp]) + ",")
+
+                # write the info of closeness
+                if closeness != None :
+                    f.write(",".join([str(aa) for aa in closeness.getlistcloseness(listtemp)]) + ",")
+                f.write("\n")
                 order += 1
 
         for listcombiidxs in listlistmax_1 :
@@ -243,9 +259,16 @@ class TableInningNo():
             order = 1
             for idxs in listcombiidxs[1:] :
                 listnos = self.listlistinningnos[idxs][1:]
-                f.write(str(lenmax) + ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
+                f.write(str(lenmax_1) + "," + ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
                 f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
-                f.write(",".join([str(aa) for aa in list(set(listnos)-set(listcombi))]) + "\n")
+                listtemp = list(set(listnos)-set(listcombi))
+                listtemp.sort()
+                f.write(",".join([str(aa) for aa in listtemp ]) + ",")
+
+                # write the info of closeness
+                if closeness != None :
+                    f.write(",".join([str(aa) for aa in closeness.getlistcloseness(listtemp)]) + ",")
+                f.write("\n")
                 order += 1
 
         f.close()
@@ -255,22 +278,22 @@ class Closeness():
     def __init__(self):
         dictdictcloseness = {}
 
-        for no in range(1, MAXNO+1) :
+        for no1 in range(1, MAXNO+1) :
             dictcloseness = {}
-            for no_greater in range(no+1, MAXNO+1):
-                dictcloseness[no_greater] = 0
-            dictdictcloseness[no] = dictcloseness
+            for no2 in range(no1+1, MAXNO+1):
+                dictcloseness[no2] = 0
+            dictdictcloseness[no1] = dictcloseness
         self.dictdictcloseness = dictdictcloseness
 
-        self.listlistcloseness2pair = []
+        self.listlistrankcloseness2pair = []
 
     def __str__(self):
         outstring = ""
-        for no in range(1, MAXNO+1) :
-            outstring += str(no) + ":"
-            dictcloseness = self.dictdictcloseness[no]
-            for no_greater in range(no+1, MAXNO+1):
-                outstring += str((no_greater,dictcloseness[no_greater] )) + ","
+        for no1 in range(1, MAXNO+1) :
+            outstring += str(no1) + ":"
+            dictcloseness = self.dictdictcloseness[no1]
+            for no2 in range(no1+1, MAXNO+1):
+                outstring += str((no2,dictcloseness[no2] )) + ","
             outstring += "\n"
         return outstring
 
@@ -285,25 +308,38 @@ class Closeness():
             no1, no2 = no2, no1
         return self.dictdictcloseness[no1][no2]
 
-    def CreatelistlistCloseness2pair(self):
-        listlistcloseness2pair =[]
+    def getlistcloseness(self, listnos):
+        if len(listnos) in [0,1]  :
+            return [1]
+        return  [self.getcloseness( bb[0], bb[1] ) for bb in itertools.combinations(listnos, 2)]
+
+
+    def CreateCloseness(self, listlistInningNos) :
+        # create the closeness from listlistInningNos at  self.dictdictcloseness
+        for listweekno in listlistInningNos :
+            for no1 in range(1, SELNO + 1 ):
+                for no2 in range(no1+1, SELNO+1):
+                    self.putcloseness(listweekno[no1], listweekno[no2])
+
+    def CreatelistlistRankCloseness2pair(self):
+        listlistrankcloseness2pair =[]
         for no1 in range(1, MAXNO+1) :
             for no2 in range(no1+1, MAXNO+1):
-                listlistcloseness2pair.append([self.dictdictcloseness[no1][no2], no1, no2])
+                listlistrankcloseness2pair.append([self.dictdictcloseness[no1][no2], no1, no2])
 
-        self.listlistcloseness2pair =  sorted(listlistcloseness2pair, key=lambda closeness2pair : closeness2pair[0], reverse= True)
+        self.listlistrankcloseness2pair =  sorted(listlistrankcloseness2pair, key=lambda closeness2pair : closeness2pair[0], reverse= True)
 
-    def GetlistlistCloseness2pair(self):
-        return self.listlistcloseness2pair
+    def GetlistlistRankCloseness2pair(self):
+        return self.listlistrankcloseness2pair
 
     def getlistFoundFromListCloseness2pair(self,no,noexcept,depth=1):
-        if len(self.listlistcloseness2pair) == 0 :
+        if len(self.listlistrankcloseness2pair) == 0 :
             print("len of ListCloseness2pair is 0 ")
             exit()
         listret = []
         depthvalue = 0
         depthcount = 0
-        for listcloseness2pair in self.listlistcloseness2pair :
+        for listcloseness2pair in self.listlistrankcloseness2pair :
             if no in listcloseness2pair[1:] :
                 if noexcept in listcloseness2pair[1:] :     # skip
                     continue
@@ -315,11 +351,7 @@ class Closeness():
                 listret.append(listcloseness2pair)
         return listret
 
-    def CreateCloseness(self, listlistInningNos) :
-        for listweekno in listlistInningNos :
-            for no1 in range(1, SELNO + 1 ):
-                for no2 in range(no1+1, SELNO+1):
-                    self.putcloseness(listweekno[no1], listweekno[no2])
+
 
     def getmostcloseness(self, no1):
         dictcloseness = self.dictdictcloseness[no1]
@@ -395,11 +427,6 @@ if __name__ == "__main__":
     # listdictinningmods = tableinningno.getlistdictModBalanceWithTable()
     # pprint.pprint(listdictinningmods, width=200)
 
-    tableinningno.writeCombiMatchwithTable(5)
-    exit()
-
-
-
     # 각 회차에서 같이 나왔던 회수 구하기.(친밀성 구하기 )
     closeness = Closeness()
     closeness.CreateCloseness(listlistinningnos)
@@ -407,8 +434,13 @@ if __name__ == "__main__":
     # print(closeness)
 
     # 가장 높은 친밀도를 가진 2 숫자의 조합을 print.
-    closeness.CreatelistlistCloseness2pair()
-    # pprint.pprint ( ListCloseness2pair )
+    # closeness.CreatelistlistRankCloseness2pair()
+    # pprint.pprint ( closeness.GetlistlistRankCloseness2pair() )
+
+
+    tableinningno.writeCombiMatchwithTable(3,closeness)
+
+    exit()
 
     tupleNoFreqSorted = tableinningno.getlisttupleNoFreqSorted()      #  listtuple (당첨번호, 당첨회수 )
     # 1. 당첨회수가 많은 숫자와  1차 pair와 2차 pair .
