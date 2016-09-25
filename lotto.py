@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from operator import itemgetter
 import itertools
+import collections
 import pprint
 MAXNO = 45
 SELNO = 6
@@ -8,9 +9,9 @@ MAXDIFFINNING = 60
 
 class TableInningNo():
     def __init__(self, filecsv):
-        self.listlistinningnos = []
-        self.tupleNoFreqSorted = []
-        self.listdictinningmods = []
+        self.listlistinningnos = []         # [[inning, no1,on2,no3,no4,no5,no6],[...],...]
+        self.listtupleNoFreqSorted = []     # [(no1, freq),(no2,freq),...]  sorted on freq
+        self.listdictinningmods = []        # [{inning,mod2,mod3,mod5,mod9,modsum, sum}, {...}, ...]
 
         for line in open(filecsv):
             listno = [int(aa) for aa in line.split(",")]
@@ -36,18 +37,18 @@ class TableInningNo():
             for no in listno[1:]:
                 dictNumFreq[int(no)] += 1
 
-        tupleNoFreqSorted =  dictNumFreq.items()
+        listtupleNoFreqSorted =  dictNumFreq.items()
 
         # 당점된 횟수가 많은 것 부터 나열하기.
-        self.tupleNoFreqSorted = sorted( tupleNoFreqSorted, key=lambda tupleNoFreq: tupleNoFreq[1], reverse=True)
+        self.listtupleNoFreqSorted = sorted( listtupleNoFreqSorted, key=lambda tupleNoFreq: tupleNoFreq[1], reverse=True)
 
     def getlisttupleNoFreqSorted(self):
-        return self.tupleNoFreqSorted
+        return self.listtupleNoFreqSorted
 
     def writelisttupleNoFreqSorted(self, filecsv='NoFreq.csv'):
         f = open(filecsv, 'w' )
         f.write("No,Frequence,\n")
-        for tupleNoFreq in self.tupleNoFreqSorted :
+        for tupleNoFreq in self.listtupleNoFreqSorted :
             f.write(",".join([str(aa) for aa in tupleNoFreq]) + "\n")
         f.close()
 
@@ -171,6 +172,18 @@ class TableInningNo():
         f.close()
 
     def writeCombiMatchwithTable(self, combi, closeness, filecsv='combimatch.csv'):
+        '''
+        :param combi: can be 3, 4,5 which means that 3 is (no1, no2, n3 ) in inning's numbers .
+                     similarly 4 means (no1,no2,no3,no4) in inning's numbers .
+                     similarly 5 means (no1,no2,no3,no4,no4) in inning's numbers.
+                     finally the purpose of 5 combination is to search if the 5 number of a inning is
+                       appear again in other inning's numbers .
+                     if there are several case of re-occurences,  write the re-occurence's count and info  to file.
+        :param closeness: write the clsoeness to file if there is not None .
+                     closeness is value between two number of not-combination numbers
+        :param filecsv: file name to save which will composed of "combimatch" + combi + .csv
+        :return: no return
+        '''
         filecsv = (str(combi) + ".").join(filecsv.split("."))
         listlistmax = []
         listlistmax_1 = []
@@ -285,7 +298,7 @@ class Closeness():
             dictdictcloseness[no1] = dictcloseness
         self.dictdictcloseness = dictdictcloseness
 
-        self.listlistrankcloseness2pair = []
+        self.listlistsortcloseness1to1 = []
 
     def __str__(self):
         outstring = ""
@@ -314,32 +327,55 @@ class Closeness():
         return  [self.getcloseness( bb[0], bb[1] ) for bb in itertools.combinations(listnos, 2)]
 
 
-    def CreateCloseness(self, listlistInningNos) :
-        # create the closeness from listlistInningNos at  self.dictdictcloseness
+    def createCloseness1to1(self, listlistInningNos) :
+        # create the closeness between 2 numbers of Inningnos ,and create  at self.dictdictcloseness
         for listweekno in listlistInningNos :
-            for no1 in range(1, SELNO + 1 ):
-                for no2 in range(no1+1, SELNO+1):
-                    self.putcloseness(listweekno[no1], listweekno[no2])
+            for tuplecombi in itertools.combinations(listweekno[1:], 2) :
+                self.putcloseness(tuplecombi[0], tuplecombi[1])
 
-    def CreatelistlistRankCloseness2pair(self):
-        listlistrankcloseness2pair =[]
+    def createlistlistSortCloseness1to1(self):
+        # sort Closeness1to1 according to closeness , and save to  self.listlistsortcloseness1to1
+        listlistsortcloseness1to1 =[]
         for no1 in range(1, MAXNO+1) :
             for no2 in range(no1+1, MAXNO+1):
-                listlistrankcloseness2pair.append([self.dictdictcloseness[no1][no2], no1, no2])
+                listlistsortcloseness1to1.append([self.dictdictcloseness[no1][no2], no1, no2])
 
-        self.listlistrankcloseness2pair =  sorted(listlistrankcloseness2pair, key=lambda closeness2pair : closeness2pair[0], reverse= True)
+        self.listlistsortcloseness1to1 =  sorted(listlistsortcloseness1to1, key=lambda closeness2pair : closeness2pair[0], reverse= True)
 
-    def GetlistlistRankCloseness2pair(self):
-        return self.listlistrankcloseness2pair
+    def getlistlistSortCloseness1to1(self):
+        return self.listlistsortcloseness1to1
+
+    def createddictcombi4rest1to1closeness(self, listlistInningNos):
+        self.ddictcombi4to1closeness = collections.defaultdict(int)
+        for listinningnos in listlistInningNos :
+            for tuplecombi4 in itertools.combinations(listinningnos[1:], 4) :
+                for rest1 in (set(listinningnos[1:])-set(tuplecombi4)) :
+                    self.ddictcombi4to1closeness[tuplecombi4,rest1] += 1
+
+    def writeddictcombi4rest1to1closeness(self, filename='combi4rest1to1closeness.csv'):
+        if not hasattr(self, "ddictcombi4to1closeness") :
+            print("ddictcombi4to1closeness is not exist")
+            return
+        listcombi4to1closenesssorted =  sorted( self.ddictcombi4to1closeness.items(), key=lambda  combi4to1close: combi4to1close[1], reverse=True )
+
+        f = open(filename, "w")
+        for combi4to1closeness in listcombi4to1closenesssorted :
+            combi4to1, closeness = combi4to1closeness
+            combi4, to1 = combi4to1
+            f.write(str(combi4) + ",")
+            f.write(str(to1) + ",")
+            f.write(str(closeness) + "\n")
+            # f.write(",".join[str(combi4), str(to1), str(closeness)] + "\n")
+        f.close()
 
     def getlistFoundFromListCloseness2pair(self,no,noexcept,depth=1):
-        if len(self.listlistrankcloseness2pair) == 0 :
+        if len(self.listlistsortcloseness1to1) == 0 :
             print("len of ListCloseness2pair is 0 ")
             exit()
         listret = []
         depthvalue = 0
         depthcount = 0
-        for listcloseness2pair in self.listlistrankcloseness2pair :
+        for listcloseness2pair in self.listlistsortcloseness1to1 :
             if no in listcloseness2pair[1:] :
                 if noexcept in listcloseness2pair[1:] :     # skip
                     continue
@@ -429,15 +465,18 @@ if __name__ == "__main__":
 
     # 각 회차에서 같이 나왔던 회수 구하기.(친밀성 구하기 )
     closeness = Closeness()
-    closeness.CreateCloseness(listlistinningnos)
+    closeness.createCloseness1to1(listlistinningnos)
     # print("closeness of two number ")
     # print(closeness)
 
     # 가장 높은 친밀도를 가진 2 숫자의 조합을 print.
-    # closeness.CreatelistlistRankCloseness2pair()
-    # pprint.pprint ( closeness.GetlistlistRankCloseness2pair() )
+    # closeness.createlistlistSortCloseness1to1()
+    # pprint.pprint ( closeness.getlistlistSortCloseness1to1() )
 
+    closeness.createddictcombi4rest1to1closeness(listlistinningnos)
+    closeness.writeddictcombi4rest1to1closeness()
 
+    exit()
     tableinningno.writeCombiMatchwithTable(3,closeness)
 
     exit()
