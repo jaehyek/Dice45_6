@@ -7,6 +7,11 @@ MAXNO = 45
 SELNO = 6
 MAXDIFFINNING = 60
 
+class CLSVAR():
+    def __init__(self):
+        pass
+
+
 class TableInningNo():
     def __init__(self, filecsv):
         self.listlistinningnos = []         # [[inning, no1,on2,no3,no4,no5,no6],[...],...]
@@ -171,7 +176,7 @@ class TableInningNo():
             f.write(str(dicttemp["sum"]) + "\n")
         f.close()
 
-    def writeCombiMatchwithTable(self, combi, closeness, filecsv='combimatch.csv'):
+    def writeCombiMatchwithTable(self, combi, clsvar, filecsv='combimatch.csv'):
         '''
         :param combi: can be 3, 4,5 which means that 3 is (no1, no2, n3 ) in inning's numbers .
                      similarly 4 means (no1,no2,no3,no4) in inning's numbers .
@@ -184,16 +189,24 @@ class TableInningNo():
         :param filecsv: file name to save which will composed of "combimatch" + combi + .csv
         :return: no return
         '''
+
         filecsv = (str(combi) + ".").join(filecsv.split("."))
-        listlistmax = []
-        listlistmax_1 = []
-        lenmax = 0
-        lenmax_1 = 0
+        listlistmax = []            # list of max-reproduced combi pair
+        listlistmax_1 = []          # list of max-1-reproduced combi pair
+        # listlistmax format
+        # [[(combi), inning1, inning2, ..]],[(combi), inning3, inning4], [...],... ]
+
+        lenmax = 0                  # max count of len( listlistmax[0][1:] )  , max count of inning1, inning2, ...
+        lenmax_1 = 0                # max count of len( listlistmax_1[0][1:] )  , max count of inning3, inning4, ...
+
         lenlistlistinningnos = len(self.listlistinningnos)
         for idx in range(lenlistlistinningnos) :
             if idx % 100 == 0  :
                 print("\n")
             print(".", end="")
+
+            # idx  :  first index of self.listlistinningnos
+            # idx2 :  second index of self.listlistinningnos
             listidx2 = [aa for aa in range(lenlistlistinningnos)]
             listidx2.remove(idx)
             listfindturplecombi = [bb for bb in itertools.combinations(self.listlistinningnos[idx][1:], combi )]
@@ -241,6 +254,16 @@ class TableInningNo():
         print("\n")
         f = open(filecsv, 'w')
 
+        combinrestnclosse= 0
+        if clsvar != None :
+            if combi == 4 :
+                combinrestnclosse = clsvar.combi3rest1close
+            elif combi == 3 :
+                combinrestnclosse = clsvar.combi2rest1close
+            elif combi == 2 :
+                combinrestnclosse = clsvar.combi1rest1close
+
+
         strcombi = ["C" + str(aa) for aa in range(1,combi+1)]
         strdiffno = ["D" + str(aa) for aa in range(1, 6-combi + 1 )]
         f.write("countfound" +","+ ",".join(strcombi) + "," + "order,inning,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "," )
@@ -251,36 +274,38 @@ class TableInningNo():
         f.write("\n")
 
         for listcombiidxs in listlistmax :
-            listcombi = list(listcombiidxs[0])
+            tuplecombi = list(listcombiidxs[0])
             order = 1
             for idxs in listcombiidxs[1:] :
                 listnos = self.listlistinningnos[idxs][1:]
-                f.write(str(lenmax) + ","+ ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
+                f.write(str(lenmax) + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(order) +","+ str(idxs+1)+",")
                 f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
-                listtemp = list(set(listnos)-set(listcombi))
-                listtemp.sort()
-                f.write(",".join([str(aa) for aa in listtemp]) + ",")
+                listrest = list(set(listnos)-set(tuplecombi))
+                listrest.sort()
+                f.write(",".join([str(aa) for aa in listrest]) + ",")
 
                 # write the info of closeness
-                if closeness != None :
-                    f.write(",".join([str(aa) for aa in closeness.getlistcloseness(listtemp)]) + ",")
+                if clsvar != None :
+                    for tuplepair in itertools.combinations( list(tuplecombi), combi-1) :
+                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), [aa ])) for aa in listrest ])  + ",")
                 f.write("\n")
                 order += 1
 
         for listcombiidxs in listlistmax_1 :
-            listcombi = list(listcombiidxs[0])
+            tuplecombi = list(listcombiidxs[0])
             order = 1
             for idxs in listcombiidxs[1:] :
                 listnos = self.listlistinningnos[idxs][1:]
-                f.write(str(lenmax_1) + "," + ",".join([str(aa) for aa in listcombi])+","+str(order) +","+ str(idxs+1)+",")
+                f.write(str(lenmax_1) + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(order) +","+ str(idxs+1)+",")
                 f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
-                listtemp = list(set(listnos)-set(listcombi))
-                listtemp.sort()
-                f.write(",".join([str(aa) for aa in listtemp ]) + ",")
+                listrest = list(set(listnos)-set(tuplecombi))
+                listrest.sort()
+                f.write(",".join([str(aa) for aa in listrest]) + ",")
 
                 # write the info of closeness
-                if closeness != None :
-                    f.write(",".join([str(aa) for aa in closeness.getlistcloseness(listtemp)]) + ",")
+                if clsvar != None :
+                    for tuplepair in itertools.combinations( list(tuplecombi), combi-1) :
+                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), [aa ])) for aa in listrest ])  + ",")
                 f.write("\n")
                 order += 1
 
@@ -345,28 +370,7 @@ class Closeness():
     def getlistlistSortCloseness1to1(self):
         return self.listlistsortcloseness1to1
 
-    def createddictcombi4rest1to1closeness(self, listlistInningNos):
-        self.ddictcombi4to1closeness = collections.defaultdict(int)
-        for listinningnos in listlistInningNos :
-            for tuplecombi4 in itertools.combinations(listinningnos[1:], 4) :
-                for rest1 in (set(listinningnos[1:])-set(tuplecombi4)) :
-                    self.ddictcombi4to1closeness[tuplecombi4,rest1] += 1
 
-    def writeddictcombi4rest1to1closeness(self, filename='combi4rest1to1closeness.csv'):
-        if not hasattr(self, "ddictcombi4to1closeness") :
-            print("ddictcombi4to1closeness is not exist")
-            return
-        listcombi4to1closenesssorted =  sorted( self.ddictcombi4to1closeness.items(), key=lambda  combi4to1close: combi4to1close[1], reverse=True )
-
-        f = open(filename, "w")
-        for combi4to1closeness in listcombi4to1closenesssorted :
-            combi4to1, closeness = combi4to1closeness
-            combi4, to1 = combi4to1
-            f.write(str(combi4) + ",")
-            f.write(str(to1) + ",")
-            f.write(str(closeness) + "\n")
-            # f.write(",".join[str(combi4), str(to1), str(closeness)] + "\n")
-        f.close()
 
     def getlistFoundFromListCloseness2pair(self,no,noexcept,depth=1):
         if len(self.listlistsortcloseness1to1) == 0 :
@@ -451,6 +455,72 @@ class   calNextSelectionStat():
                 listturpleNumInningOccurs.append((no, diffinning,self.dictdictdiffInning[no][diffinning] ))
         return listturpleNumInningOccurs
 
+class   CombiRestCloseness():
+    def __init__(self, listlistinningnos, combin, restn):
+        if combin < restn  and (combin + restn) >= 6 :
+            print("parameter error : combin, restn")
+            exit()
+
+        self.combin = combin
+        self.restn = restn
+        self.ddictcombinrestncloseness = collections.defaultdict(int)
+        for listinningnos in listlistinningnos :
+            for tuplecombi in  itertools.combinations(listinningnos[1:], combin) :
+                listtemp = list(tuplecombi)
+                listtemp.sort()
+                tuplecombi = tuple(listtemp)
+                for tuplerest in itertools.combinations(set(listinningnos[1:]) - set(tuplecombi), restn ) :
+                    listtemp = list(tuplerest)
+                    listtemp.sort()
+                    tuplerest = tuple(listtemp)
+                    self.ddictcombinrestncloseness[tuplecombi,tuplerest ] += 1
+
+        self.listcombinrestnclosesorted = sorted(self.ddictcombinrestncloseness.items(), key=lambda  combirestclose: combirestclose[1],reverse=True )
+
+    def writecombirestclose(self, filename=""):
+
+        if not hasattr(self, "listcombinrestnclosesorted") :
+            print("listcombinrestnclosesorted is not exist")
+            return
+
+        if len(filename) == 0 :
+            filename = "combi%srest%scloseness.csv"%(self.combin, self.restn)
+
+        f = open(filename, "w")
+        for combinrestnclose in self.listcombinrestnclosesorted :
+            combinrestn, closeness = combinrestnclose
+            tuplecombi, tuplerest = combinrestn
+            f.write(str(tuplecombi) + ",")
+            f.write(str(tuplerest) + ",")
+            f.write(str(closeness) + "\n")
+        f.close()
+
+    def getcloseness(self, listcombi,listrestn):
+        if not hasattr(self, "ddictcombinrestncloseness") :
+            print("ddictcombinrestncloseness is not exist")
+            exit()
+
+        if len(listcombi) != self.combin  or len(listrestn) != self.restn :
+            print("the length of parameter is not proper")
+            exit()
+        listcombi.sort()
+        listrestn.sort()
+        return self.ddictcombinrestncloseness.get((tuple(listcombi), tuple(listrestn)), 0)
+
+    def getlistbestrest(self, listcombi):
+        if not hasattr(self, "listcombinrestnclosesorted") :
+            print("listcombinrestnclosesorted is not exist")
+            exit()
+
+        listcombi.sort()
+        tupletemp = tuple(listcombi)
+        for combinrestnclose in self.listcombinrestnclosesorted :
+            combinrestn , close = combinrestnclose
+            tuplecombi, tuplerest = combinrestn
+            if tuplecombi == tupletemp :
+                return list(tuplerest)
+
+
 if __name__ == "__main__":
 
     tableinningno = TableInningNo("lotto.csv")
@@ -473,11 +543,30 @@ if __name__ == "__main__":
     # closeness.createlistlistSortCloseness1to1()
     # pprint.pprint ( closeness.getlistlistSortCloseness1to1() )
 
-    closeness.createddictcombi4rest1to1closeness(listlistinningnos)
-    closeness.writeddictcombi4rest1to1closeness()
+    combi1rest1close = CombiRestCloseness(listlistinningnos, 1, 1)
+    # combi1rest1close.writecombirestclose()
 
-    exit()
-    tableinningno.writeCombiMatchwithTable(3,closeness)
+    combi2rest1close = CombiRestCloseness(listlistinningnos, 2, 1)
+    # combi2rest1close.writecombirestclose()
+
+    combi3rest2close = CombiRestCloseness(listlistinningnos, 3, 2)
+    # combi3rest2close.writecombirestclose()
+
+    combi3rest1close = CombiRestCloseness(listlistinningnos, 3, 1)
+    # combi3rest1close.writecombirestclose()
+
+    combi4rest1close = CombiRestCloseness(listlistinningnos, 4, 1)
+    # combi4rest1close.writecombirestclose()
+
+    clsvar = CLSVAR()
+
+    clsvar.combi1rest1close = combi1rest1close
+    clsvar.combi2rest1close = combi2rest1close
+    clsvar.combi3rest2close = combi3rest2close
+    clsvar.combi3rest1close = combi3rest1close
+    clsvar.combi4rest1close = combi4rest1close
+
+    tableinningno.writeCombiMatchwithTable(4,clsvar)
 
     exit()
 
