@@ -256,12 +256,13 @@ class TableInningNo():
 
         combinrestnclosse= 0
         if clsvar != None :
-            if combi == 4 :
-                combinrestnclosse = clsvar.combi3rest1close
-            elif combi == 3 :
-                combinrestnclosse = clsvar.combi2rest1close
-            elif combi == 2 :
-                combinrestnclosse = clsvar.combi1rest1close
+            combinrestnclosse = clsvar.combi1rest1close
+            # if combi == 4 :
+            #     combinrestnclosse = clsvar.combi3rest1close
+            # elif combi == 3 :
+            #     combinrestnclosse = clsvar.combi2rest1close
+            # elif combi == 2 :
+            #     combinrestnclosse = clsvar.combi1rest1close
 
 
         strcombi = ["C" + str(aa) for aa in range(1,combi+1)]
@@ -286,7 +287,7 @@ class TableInningNo():
 
                 # write the info of closeness
                 if clsvar != None :
-                    for tuplepair in itertools.combinations( list(tuplecombi), combi-1) :
+                    for tuplepair in itertools.combinations( list(tuplecombi), 1) :
                         f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), [aa ])) for aa in listrest ])  + ",")
                 f.write("\n")
                 order += 1
@@ -304,7 +305,7 @@ class TableInningNo():
 
                 # write the info of closeness
                 if clsvar != None :
-                    for tuplepair in itertools.combinations( list(tuplecombi), combi-1) :
+                    for tuplepair in itertools.combinations( list(tuplecombi), 1) :
                         f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), [aa ])) for aa in listrest ])  + ",")
                 f.write("\n")
                 order += 1
