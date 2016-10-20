@@ -176,7 +176,7 @@ class TableInningNo():
             f.write(str(dicttemp["sum"]) + "\n")
         f.close()
 
-    def writeCombiMatchwithTable(self, combi, clsvar, filecsv='combimatch.csv'):
+    def writeCombiMatchwithTable(self, combi, combiinside, combirest, clsvar, filecsv='combimatch.csv'):
         '''
         :param combi: can be 3, 4,5 which means that 3 is (no1, no2, n3 ) in inning's numbers .
                      similarly 4 means (no1,no2,no3,no4) in inning's numbers .
@@ -190,7 +190,7 @@ class TableInningNo():
         :return: no return
         '''
 
-        filecsv = (str(combi) + ".").join(filecsv.split("."))
+        filecsv = (str(combi) + str(combiinside)+str(combirest) +".").join(filecsv.split("."))
         listlistmax = []            # list of max-reproduced combi pair
         listlistmax_1 = []          # list of max-1-reproduced combi pair
         # listlistmax format
@@ -256,18 +256,29 @@ class TableInningNo():
 
         combinrestnclosse= 0
         if clsvar != None :
-            combinrestnclosse = clsvar.combi1rest1close
-            # if combi == 4 :
-            #     combinrestnclosse = clsvar.combi3rest1close
-            # elif combi == 3 :
-            #     combinrestnclosse = clsvar.combi2rest1close
-            # elif combi == 2 :
-            #     combinrestnclosse = clsvar.combi1rest1close
+            # combinrestnclosse = clsvar.combi1rest1close
+            if combiinside == 4 and combirest == 2  :
+                combinrestnclosse = clsvar.combi4rest2close
+            elif combiinside == 4 and combirest == 1  :
+                combinrestnclosse = clsvar.combi4rest1close
+            elif combiinside == 3 and combirest == 1  :
+                combinrestnclosse = clsvar.combi3rest1close
+            elif combiinside == 3 and combirest == 1  :
+                combinrestnclosse = clsvar.combi3rest1close
+            elif combiinside == 2 and combirest == 1  :
+                combinrestnclosse = clsvar.combi2rest1close
+            elif combiinside == 2 and combirest == 2  :
+                combinrestnclosse = clsvar.combi2rest2close
+            elif combiinside == 1 and combirest == 1  :
+                combinrestnclosse = clsvar.combi1rest1close
+            else:
+                print("error of combination and rest parameter")
 
 
         strcombi = ["C" + str(aa) for aa in range(1,combi+1)]
         strdiffno = ["D" + str(aa) for aa in range(1, 6-combi + 1 )]
-        f.write("countfound" +","+ ",".join(strcombi) + "," + "order,inning,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "," )
+        strdiffno.append("D_sum")
+        f.write("countfound" +","+ ",".join(strcombi) + "," + "order,inning,C_sum,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "," )
         if closeness != None :
             lendiffcombi = len([aa for aa in itertools.combinations(range(6-combi),2 )])
             strdiffnoclose = [ "DClo" + str(aa) for aa in range(lendiffcombi)]
@@ -277,38 +288,53 @@ class TableInningNo():
         for listcombiidxs in listlistmax :
             tuplecombi = list(listcombiidxs[0])
             order = 1
-            for idxs in listcombiidxs[1:] :
-                listnos = self.listlistinningnos[idxs][1:]
-                f.write(str(lenmax) + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(order) +","+ str(idxs+1)+",")
+            for inning in listcombiidxs[1:] :
+                listnos = self.listlistinningnos[inning][1:]
+
+                # write Combination , order, inning, c_sum
+                f.write(str(lenmax) + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(order) +","+ str(inning+1)+"," + str(sum(tuplecombi)) + ",")
+
+                # write nos , sum
                 f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
+
                 listrest = list(set(listnos)-set(tuplecombi))
                 listrest.sort()
-                f.write(",".join([str(aa) for aa in listrest]) + ",")
+
+                # write rest
+                f.write(",".join([str(aa) for aa in listrest]) + "," + str(sum(listrest)) + ",")
 
                 # write the info of closeness
                 if clsvar != None :
-                    for tuplepair in itertools.combinations( list(tuplecombi), 1) :
-                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), [aa ])) for aa in listrest ])  + ",")
+                    for tuplepair in itertools.combinations( list(tuplecombi), combiinside) :
+                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), list(aa))) for aa in itertools.combinations( listrest, combirest) ])  + ",")
                 f.write("\n")
                 order += 1
 
         for listcombiidxs in listlistmax_1 :
             tuplecombi = list(listcombiidxs[0])
             order = 1
-            for idxs in listcombiidxs[1:] :
-                listnos = self.listlistinningnos[idxs][1:]
-                f.write(str(lenmax_1) + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(order) +","+ str(idxs+1)+",")
+            for inning in listcombiidxs[1:] :
+                listnos = self.listlistinningnos[inning][1:]
+
+                # write Combination , order, inning, c_sum
+                f.write(str(lenmax_1) + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(order) +","+ str(inning+1)+"," + str(sum(tuplecombi)) + ",")
+
+                # write nos , sum
                 f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
+
                 listrest = list(set(listnos)-set(tuplecombi))
                 listrest.sort()
-                f.write(",".join([str(aa) for aa in listrest]) + ",")
+
+                # write rest
+                f.write(",".join([str(aa) for aa in listrest]) + "," + str(sum(listrest)) + ",")
 
                 # write the info of closeness
                 if clsvar != None :
-                    for tuplepair in itertools.combinations( list(tuplecombi), 1) :
-                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), [aa ])) for aa in listrest ])  + ",")
+                    for tuplepair in itertools.combinations( list(tuplecombi), combiinside) :
+                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), list(aa) )) for aa in itertools.combinations( listrest, combirest) ])  + ",")
                 f.write("\n")
                 order += 1
+
 
         f.close()
 
@@ -550,6 +576,9 @@ if __name__ == "__main__":
     combi2rest1close = CombiRestCloseness(listlistinningnos, 2, 1)
     # combi2rest1close.writecombirestclose()
 
+    combi2rest2close = CombiRestCloseness(listlistinningnos, 2, 2)
+    # combi2rest2close.writecombirestclose()
+
     combi3rest2close = CombiRestCloseness(listlistinningnos, 3, 2)
     # combi3rest2close.writecombirestclose()
 
@@ -559,15 +588,20 @@ if __name__ == "__main__":
     combi4rest1close = CombiRestCloseness(listlistinningnos, 4, 1)
     # combi4rest1close.writecombirestclose()
 
+    combi4rest2close = CombiRestCloseness(listlistinningnos, 4, 2)
+    # combi4rest2close.writecombirestclose()
+
     clsvar = CLSVAR()
 
     clsvar.combi1rest1close = combi1rest1close
     clsvar.combi2rest1close = combi2rest1close
+    clsvar.combi2rest2close = combi2rest2close
     clsvar.combi3rest2close = combi3rest2close
     clsvar.combi3rest1close = combi3rest1close
     clsvar.combi4rest1close = combi4rest1close
+    clsvar.combi4rest2close = combi4rest2close
 
-    tableinningno.writeCombiMatchwithTable(4,clsvar)
+    tableinningno.writeCombiMatchwithTable(5,4,2,clsvar)
 
     exit()
 
