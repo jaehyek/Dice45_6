@@ -254,23 +254,23 @@ class TableInningNo():
         print("\n")
         f = open(filecsv, 'w')
 
-        combinrestnclosse= 0
+        combinrestnclose= 0
         if clsvar != None :
-            # combinrestnclosse = clsvar.combi1rest1close
+            # combinrestnclose = clsvar.combi1rest1close
             if combiinside == 4 and combirest == 2  :
-                combinrestnclosse = clsvar.combi4rest2close
+                combinrestnclose = clsvar.combi4rest2close
             elif combiinside == 4 and combirest == 1  :
-                combinrestnclosse = clsvar.combi4rest1close
+                combinrestnclose = clsvar.combi4rest1close
+            elif combiinside == 3 and combirest == 2  :
+                combinrestnclose = clsvar.combi3rest2close
             elif combiinside == 3 and combirest == 1  :
-                combinrestnclosse = clsvar.combi3rest1close
-            elif combiinside == 3 and combirest == 1  :
-                combinrestnclosse = clsvar.combi3rest1close
+                combinrestnclose = clsvar.combi3rest1close
             elif combiinside == 2 and combirest == 1  :
-                combinrestnclosse = clsvar.combi2rest1close
+                combinrestnclose = clsvar.combi2rest1close
             elif combiinside == 2 and combirest == 2  :
-                combinrestnclosse = clsvar.combi2rest2close
+                combinrestnclose = clsvar.combi2rest2close
             elif combiinside == 1 and combirest == 1  :
-                combinrestnclosse = clsvar.combi1rest1close
+                combinrestnclose = clsvar.combi1rest1close
             else:
                 print("error of combination and rest parameter")
 
@@ -279,12 +279,13 @@ class TableInningNo():
         strdiffno = ["D" + str(aa) for aa in range(1, 6-combi + 1 )]
         strdiffno.append("D_sum")
         f.write("countfound" +","+ ",".join(strcombi) + "," + "order,inning,C_sum,no1,no2,no3,no4,no5,no6,sum," + ",".join(strdiffno) + "," )
-        if closeness != None :
+        if combinrestnclose != None :
             lendiffcombi = len([aa for aa in itertools.combinations(range(6-combi),2 )])
             strdiffnoclose = [ "DClo" + str(aa) for aa in range(lendiffcombi)]
             f.write(",".join(strdiffnoclose) + ",")
         f.write("\n")
 
+        listcombiidxscombiinsidecombirestclosenessMax = []
         for listcombiidxs in listlistmax :
             tuplecombi = list(listcombiidxs[0])
             order = 1
@@ -306,10 +307,14 @@ class TableInningNo():
                 # write the info of closeness
                 if clsvar != None :
                     for tuplepair in itertools.combinations( list(tuplecombi), combiinside) :
-                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), list(aa))) for aa in itertools.combinations( listrest, combirest) ])  + ",")
+                        for tuplerest in itertools.combinations( listrest, combirest) :
+                            closeness = combinrestnclose.getcloseness(list(tuplepair), list(tuplerest))
+                            listcombiidxscombiinsidecombirestclosenessMax.append([listcombiidxs,tuplepair,tuplerest,closeness  ])
+                            f.write(str(closeness)   + ",")
                 f.write("\n")
                 order += 1
 
+        listcombiidxscombiinsidecombirestclosenessMax_1 = []
         for listcombiidxs in listlistmax_1 :
             tuplecombi = list(listcombiidxs[0])
             order = 1
@@ -331,9 +336,70 @@ class TableInningNo():
                 # write the info of closeness
                 if clsvar != None :
                     for tuplepair in itertools.combinations( list(tuplecombi), combiinside) :
-                        f.write(",".join([str(combinrestnclosse.getcloseness(list(tuplepair), list(aa) )) for aa in itertools.combinations( listrest, combirest) ])  + ",")
+                        for tuplerest in itertools.combinations( listrest, combirest) :
+                            closeness = combinrestnclose.getcloseness(list(tuplepair), list(tuplerest))
+                            listcombiidxscombiinsidecombirestclosenessMax_1.append([listcombiidxs,tuplepair,tuplerest,closeness  ])
+                            f.write(str(closeness)   + ",")
                 f.write("\n")
                 order += 1
+
+        if len(listlistmax_1) == 0 :
+            f.close()
+
+        # listcombiidxscombiinsidecombirestclosenessMax_1 - listcombiidxscombiinsidecombirestclosenessMax
+        # if combination of combiinside and combirest is same
+        # and if the closeness of Max_1 is same or greater than Max .
+
+        listtodelete = []
+        for combiidxscombiinsidecombirestclosenessMax_1 in listcombiidxscombiinsidecombirestclosenessMax_1 :
+            combiidxsMax_1, combiinsideMax_1, combirestMax_1, closenessMax_1 = combiidxscombiinsidecombirestclosenessMax_1
+            for combiidxscombiinsidecombirestclosenessMax in listcombiidxscombiinsidecombirestclosenessMax :
+                combiidxsMax, combiinsideMax, combirestMax, closenessMax = combiidxscombiinsidecombirestclosenessMax
+                if combiinsideMax_1 == combiinsideMax and combirestMax_1 == combirestMax and closenessMax_1 >= closenessMax :
+                    listtodelete.append(combiidxscombiinsidecombirestclosenessMax_1)
+
+        print("len of combiidxscombiinsidecombirestclosenessMax_1 to delete is %s" % (len(listtodelete)))
+        for combiidxscombiinsidecombirestclosenessMax_1 in listtodelete :
+            combiidxsMax_1, combiinsideMax_1, combirestMax_1, closenessMax_1 = combiidxscombiinsidecombirestclosenessMax_1
+            try:
+                listlistmax_1.remove(combiidxsMax_1)
+            except:
+                continue
+
+        print("len of listlistmax_1 after deleting is %s" % (len(listlistmax_1)))
+        # print the combiidxscombiinsidecombirestclosenessMax_1
+        for listcombiidxs in listlistmax_1 :
+            tuplecombi = list(listcombiidxs[0])
+
+            # calculte the max number of intersection count of tuplecombi with listlistmax_1
+            maxintersection = max( [len(set(tuplecombi).intersection(set(listcombiidxs[0]))) for listcombiidxs in listlistmax])
+            isection = "isection%s"%maxintersection
+            for inning in listcombiidxs[1:] :
+                listnos = self.listlistinningnos[inning][1:]
+
+                # write Combination , order, inning, c_sum
+                f.write("D" + ","+ ",".join([str(aa) for aa in tuplecombi])+","+str(isection) +","+ str(inning+1)+"," + str(sum(tuplecombi)) + ",")
+
+                # write nos , sum
+                f.write(",".join([str(aa) for aa in listnos]) + ","+ str(sum(listnos)) + "," )
+
+                listrest = list(set(listnos)-set(tuplecombi))
+                listrest.sort()
+
+                # write rest
+                f.write(",".join([str(aa) for aa in listrest]) + "," + str(sum(listrest)) + ",")
+
+                # write the info of closeness
+                if clsvar != None :
+                    for tuplepair in itertools.combinations( list(tuplecombi), combiinside) :
+                        for tuplerest in itertools.combinations( listrest, combirest) :
+                            closeness = combinrestnclose.getcloseness(list(tuplepair), list(tuplerest))
+                            f.write(str(closeness)   + ",")
+                f.write("\n")
+
+
+
+
 
 
         f.close()
@@ -601,9 +667,22 @@ if __name__ == "__main__":
     clsvar.combi4rest1close = combi4rest1close
     clsvar.combi4rest2close = combi4rest2close
 
-    tableinningno.writeCombiMatchwithTable(5,4,2,clsvar)
+    tableinningno.writeCombiMatchwithTable(4,3,1,clsvar)
 
     exit()
+
+    # How to select and candidate the number
+    # 1. writeCombiMatchwithTable(4,3,1,clsvar) 실행
+    # 2. csv file에서  lenmax_1 == 2 이고, combi intersection이 가장 큰 것 ( 여기서는 2 ) 만을 선택한다. ==> lenmax = 3 인 집단과의 유사성을 활용.
+    # 3. closeness가 모두 1인 것만 선택한다. 2 이상은 가능성이 적은 것으로 판단.
+    # 4. combi가 같은  2개의 조합에서,  그 inning 간격 + last inning = 현재 진행 innning과 가장 비슷한 것을 후보로 선택한다.
+    # 5. 20161021일 기준으로 22,33,36,37 이 후보이다.
+    # 6 22,33,36,37의 combi 에서  intersection=2을 만들어 낸  combi을  lenmax = 3의 그룹에서 찾는다.
+    #  --> 3,13,33,37 이다.  해당 inning과 no6은
+    # 434	3	13	20	24	33	37
+    # 572	3	13	18	33	37	45
+    # 698	3	11	13	21	33	37 ( 가장 최근 --> 제거 )
+    #  22,33,36,37 와 차집합을 판단하면,    3, 13, 18, 20, 24, 45 이 나온다.
 
     tupleNoFreqSorted = tableinningno.getlisttupleNoFreqSorted()      #  listtuple (당첨번호, 당첨회수 )
     # 1. 당첨회수가 많은 숫자와  1차 pair와 2차 pair .
