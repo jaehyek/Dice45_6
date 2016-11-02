@@ -669,20 +669,50 @@ if __name__ == "__main__":
 
     tableinningno.writeCombiMatchwithTable(4,3,1,clsvar)
 
+    listcandidate = [22,33,36,37]
+    listexcept = [3, 11, 13, 18, 20,21, 24, 45]
+    listcandidateplus = list( set(range(1,46)) - set(listcandidate) - set(listexcept) )
+
+    value = 0
+    for combicandi in itertools.combinations(listcandidate, 2 ) :
+        for combicandiplus in  itertools.combinations(listcandidateplus, 2 ) :
+            value = max([value, combi2rest2close.getcloseness( list(combicandi),list(combicandiplus) ) ])
+
+    print("max of combicandi and combicandiplus is %s" % value )
+    for combicandi in itertools.combinations(listcandidate, 2 ) :
+        for combicandiplus in  itertools.combinations(listcandidateplus, 2 ) :
+            if  combi2rest2close.getcloseness( list(combicandi),list(combicandiplus) ) == value :
+                print("big combi is %s %s"%(combicandi,combicandiplus ))
+
     exit()
 
     # How to select and candidate the number
-    # 1. writeCombiMatchwithTable(4,3,1,clsvar) 실행
-    # 2. csv file에서  lenmax_1 == 2 이고, combi intersection이 가장 큰 것 ( 여기서는 2 ) 만을 선택한다. ==> lenmax = 3 인 집단과의 유사성을 활용.
-    # 3. closeness가 모두 1인 것만 선택한다. 2 이상은 가능성이 적은 것으로 판단.
-    # 4. combi가 같은  2개의 조합에서,  그 inning 간격 + last inning = 현재 진행 innning과 가장 비슷한 것을 후보로 선택한다.
-    # 5. 20161021일 기준으로 22,33,36,37 이 후보이다.
-    # 6 22,33,36,37의 combi 에서  intersection=2을 만들어 낸  combi을  lenmax = 3의 그룹에서 찾는다.
+    # 1. writeCombiMatchwithTable(4,3,1,clsvar) 실행. 즉  combi=4, combiinside=3, rest=1 을 실행하고, listmax, listmax_1을  만든다.
+    # 2. 앞에서 만든  (combiinside, rest, closeness) 조합을 만족하는 것으로,   listmax_1 - listmax 을 실행하여 Diff group을 만들고,
+    # 3. Diff group와 listmax 와의 set 차집합 중, 가장 개수가 큰 것을 isection%s 으로 표시.
+    # 4. csv file에서  lenmax_1 == 2 이고, combi intersection이 가장 큰 것 ( 여기서는 2 ) 만을 선택한다. ==> lenmax = 3 인 집단과의 유사성을 활용.
+    # 5. closeness가 모두 1인 것만 선택한다. 2 이상은 가능성이 적은 것으로 판단.
+    # 6. combi가 같은  2개의 조합에서,  그 inning 간격 + last inning = 현재 진행 innning과 가장 비슷한 것을 후보로 선택한다.
+    # 7. 20161021일 기준으로 22,33,36,37 이 후보이다.
+    # 8. 22,33,36,37의 combi 에서  intersection=2을 만들어 낸  combi을  lenmax = 3의 그룹에서 찾는다.
     #  --> 3,13,33,37 이다.  해당 inning과 no6은
     # 434	3	13	20	24	33	37
     # 572	3	13	18	33	37	45
-    # 698	3	11	13	21	33	37 ( 가장 최근 --> 제거 )
-    #  22,33,36,37 와 차집합을 판단하면,    3, 13, 18, 20, 24, 45 이 나온다.
+    # 698	3	11	13	21	33	37
+    #  22,33,36,37 와 차집합을 판단하면,   ( 3, 11, 13, 18, 20,21, 24, 45)은 나오지 않을 숫자이다.
+
+    # max of combicandi and combicandiplus is 2
+    # big combi is (22, 36) (10, 34)
+    # big combi is (22, 36) (10, 44)
+    # big combi is (22, 36) (34, 44)
+    # big combi is (22, 37) (16, 17)
+    # big combi is (22, 37) (23, 25)
+    # big combi is (22, 37) (27, 31)
+    # big combi is (33, 36) (4, 25)   --> 선택 2 가지 이므로 , 3가지는 달성되어야 할 목표이다.
+    # big combi is (33, 36) (7, 40)   --> 선택 2 가지 이므로 , 3가지는 달성되어야 할 목표이다.
+    # big combi is (33, 37) (2, 35)
+    # big combi is (36, 37) (12, 34)
+    # big combi is (36, 37) (16, 38)
 
     tupleNoFreqSorted = tableinningno.getlisttupleNoFreqSorted()      #  listtuple (당첨번호, 당첨회수 )
     # 1. 당첨회수가 많은 숫자와  1차 pair와 2차 pair .
