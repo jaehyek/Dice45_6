@@ -209,8 +209,8 @@ class TableInningNo():
             # idx2 :  second index of self.listlistinningnos
             listidx2 = [aa for aa in range(lenlistlistinningnos)]
             listidx2.remove(idx)
-            listfindturplecombi = [bb for bb in itertools.combinations(self.listlistinningnos[idx][1:], combi )]
-            for findtuplecombi in listfindturplecombi :
+            listfindtuplecombi = [bb for bb in itertools.combinations(self.listlistinningnos[idx][1:], combi )]
+            for findtuplecombi in listfindtuplecombi :
                 # check it findtuplecombi is already found and recorded in list  listlistmax and listlistmax_1, if then, skip .
                 boolexist = False
                 for combiidxs in listlistmax :
@@ -404,6 +404,46 @@ class TableInningNo():
 
         f.close()
 
+    def getlisttupleSubordinateCombi(self, combi):
+        """
+        self.listlistinningnos에서 combi 만큼 생성된  tuple에 대해 발생 빈도를 계산한다.
+        cdictCombiFrequency : 저장소로,  type은 Dict type의 Counter.
+        setCombiFrequency : set type으로  빈도의 수자의 set.
+        
+        :param combi: combination할 숫자
+        :return: 빈도 max_1에 해당하는 combi=4인 listtuple을 반환한다.
+        """
+        cdictCombiFrequency = collections.Counter()
+        for listinningnos in self.listlistinningnos :
+            for tuplecombi in itertools.combinations ( listinningnos[1:], combi) :
+                cdictCombiFrequency[tuplecombi] += 1
+
+        # calculate the kind of combiFrequency
+        setCombiFrequency = set(cdictCombiFrequency.values())
+        # print(setCombiFrequency)
+
+        maxcount = sorted(list(setCombiFrequency), reverse=True)[0]
+        max_1count = sorted(list(setCombiFrequency), reverse=True)[1]
+
+        # create the truplecombi list of maxcount, max_1couint .
+        listtuplecombimax = []
+        listtuplecombimax_1 = []
+        for tuplecombi in cdictCombiFrequency :
+            if cdictCombiFrequency[tuplecombi] == maxcount :
+                listtuplecombimax.append(tuplecombi)
+            elif cdictCombiFrequency[tuplecombi] == max_1count :
+                listtuplecombimax_1.append(tuplecombi)
+            else:
+                continue
+
+        return listtuplecombimax_1
+
+
+
+
+
+
+
 
 class Closeness():
     def __init__(self):
@@ -540,17 +580,21 @@ class   calNextSelectionStat():
 
         self.dictdictdiffInning = dictdictdiffInning
 
-    def makeListTurpleNumInningOccurs(self):
-        #마지막 회차 기준으로 다음 회차에 나올 가능성을  listturple형태로 계산
-        listturpleNumInningOccurs = []
+    def makeListtupleNumInningOccurs(self):
+        #마지막 회차 기준으로 다음 회차에 나올 가능성을  listtuple형태로 계산
+        listtupleNumInningOccurs = []
         for no in range(1, MAXNO+1) :
             for diffinning in range(1, MAXDIFFINNING + 1) :
-                listturpleNumInningOccurs.append((no, diffinning,self.dictdictdiffInning[no][diffinning] ))
-        return listturpleNumInningOccurs
+                listtupleNumInningOccurs.append((no, diffinning,self.dictdictdiffInning[no][diffinning] ))
+        return listtupleNumInningOccurs
 
 class   CombiRestCloseness():
+    """
+    6개의 숫자에서 관심의 combi (combination) 와 rest(나머지)에 대한  친밀도(closeness = 발현된 회수 )을  구하고 이를 sort해서
+    self.listcombinrestnclosesorted 에 저장한다.
+    """
     def __init__(self, listlistinningnos, combin, restn):
-        if combin < restn  and (combin + restn) >= 6 :
+        if combin < restn  or (combin + restn) >= 6 :
             print("parameter error : combin, restn")
             exit()
 
@@ -571,11 +615,6 @@ class   CombiRestCloseness():
         self.listcombinrestnclosesorted = sorted(self.ddictcombinrestncloseness.items(), key=lambda  combirestclose: combirestclose[1],reverse=True )
 
     def writecombirestclose(self, filename=""):
-
-        if not hasattr(self, "listcombinrestnclosesorted") :
-            print("listcombinrestnclosesorted is not exist")
-            return
-
         if len(filename) == 0 :
             filename = "combi%srest%scloseness.csv"%(self.combin, self.restn)
 
@@ -589,10 +628,6 @@ class   CombiRestCloseness():
         f.close()
 
     def getcloseness(self, listcombi,listrestn):
-        if not hasattr(self, "ddictcombinrestncloseness") :
-            print("ddictcombinrestncloseness is not exist")
-            exit()
-
         if len(listcombi) != self.combin  or len(listrestn) != self.restn :
             print("the length of parameter is not proper")
             exit()
@@ -601,6 +636,11 @@ class   CombiRestCloseness():
         return self.ddictcombinrestncloseness.get((tuple(listcombi), tuple(listrestn)), 0)
 
     def getlistbestrest(self, listcombi):
+        """
+        listcombi에 가장 closeness가 좋은 listrest을 찾아서 return 한다.
+        :param listcombi: 
+        :return: 
+        """
         if not hasattr(self, "listcombinrestnclosesorted") :
             print("listcombinrestnclosesorted is not exist")
             exit()
@@ -612,6 +652,31 @@ class   CombiRestCloseness():
             tuplecombi, tuplerest = combinrestn
             if tuplecombi == tupletemp :
                 return list(tuplerest)
+
+    def getlisttupleSubordinateRest(self, listcombi):
+        """
+        최상의 closeness보다 1이 작은 closeness을 가지는 (listcombi, listrest) pair중에 
+        parameter의 listcombi에 pair인 rest의 list을 구하고 return한다. 
+        :param listcombi: 찾을 combi list
+        :return: 
+        """
+
+        if self.combin != len(listcombi) :
+            return []
+
+        # 먼저 closeness의 max을 구한다.
+        max_1count = max(set(self.ddictcombinrestncloseness.values())) -1
+        findcombit = sorted(listcombi)
+        listtuplerest = []
+
+        # listcombi가 같고, closeness가 max_1count인 rest을 구하고, list에 저장한다.
+        for combinrestnclose in self.listcombinrestnclosesorted :
+            combinrestn , close = combinrestnclose
+            tuplecombi, tuplerest = combinrestn
+            if max_1count == close and findcombit == sorted(tuplecombi) :
+                listtuplerest.append(tuplerest)
+
+        return listtuplerest
 
 
 if __name__ == "__main__":
@@ -636,6 +701,10 @@ if __name__ == "__main__":
     # closeness.createlistlistSortCloseness1to1()
     # pprint.pprint ( closeness.getlistlistSortCloseness1to1() )
 
+
+    # combi에 대한  restn의 친밀도를 가진 classs을 생성한다. 혹은 file write한다.
+    # 시사점 : 최고의 친밀도를 가진 combi와 restn을 다시 발생할 가능성이 없는 것이다.
+    # 이를 활용해서,  후보 숫자들을 filter할 수 있다.
     combi1rest1close = CombiRestCloseness(listlistinningnos, 1, 1)
     # combi1rest1close.writecombirestclose()
 
@@ -654,18 +723,79 @@ if __name__ == "__main__":
     combi4rest1close = CombiRestCloseness(listlistinningnos, 4, 1)
     # combi4rest1close.writecombirestclose()
 
-    combi4rest2close = CombiRestCloseness(listlistinningnos, 4, 2)
-    # combi4rest2close.writecombirestclose()
 
+    # 공통 class을 만들어서  변수들을 저장한다.
     clsvar = CLSVAR()
 
+    # 후보 숫자들을  filter할 수 있는  class들을 저장한다.
     clsvar.combi1rest1close = combi1rest1close
     clsvar.combi2rest1close = combi2rest1close
     clsvar.combi2rest2close = combi2rest2close
     clsvar.combi3rest2close = combi3rest2close
     clsvar.combi3rest1close = combi3rest1close
     clsvar.combi4rest1close = combi4rest1close
-    clsvar.combi4rest2close = combi4rest2close
+
+    #아래의 의도는 combi==4 이고, combi의 발현의 회수가 max-1인 tuplecombi을 list으로 반환받는다
+    # 이유는 발현의 회수가 max이면 다시 발현이 될 수 가 없으므로, 이를 대상에서 제와하면,
+    #  발현의 회수가 max-1이 적절한  조건이다.
+    listtuplecombimax_1 = tableinningno.getlisttupleSubordinateCombi(4)
+
+    setitemcount = set()
+    setitemmax = set()
+    listlistTuplecombiCdicttemp = []
+    for tuplecombi in listtuplecombimax_1 :
+        cdicttemp = collections.Counter()
+
+        for tuplerest in combi4rest1close.getlisttupleSubordinateRest(list(tuplecombi)) :
+            cdicttemp[tuplerest] += 1
+
+        for listtuplerest in [combi3rest1close.getlisttupleSubordinateRest(list(aa)) for aa in itertools.combinations(tuplecombi, 3 )]:
+            for tuplerest in listtuplerest:
+                cdicttemp[tuplerest] += 1
+
+        for listtuplerest in [combi3rest2close.getlisttupleSubordinateRest(list(aa)) for aa in itertools.combinations(tuplecombi, 3 )]:
+            for tuplerest in listtuplerest:
+                cdicttemp[tuplerest] += 1
+
+        for listtuplerest in [combi2rest2close.getlisttupleSubordinateRest(list(aa)) for aa in itertools.combinations(tuplecombi, 2 )]:
+            for tuplerest in listtuplerest:
+                cdicttemp[tuplerest] += 1
+
+        for listtuplerest in [combi2rest1close.getlisttupleSubordinateRest(list(aa)) for aa in itertools.combinations(tuplecombi, 2 )]:
+            for tuplerest in listtuplerest:
+                cdicttemp[tuplerest] += 1
+
+        print(str(tuplecombi) + ": ", end="")
+        print("\titemcount: %s, " % len(cdicttemp), end="")
+        print("\titemmax : %s" % max(cdicttemp.values()))
+
+        listlistTuplecombiCdicttemp.append([tuplecombi,cdicttemp])
+
+        setitemcount.add(len(cdicttemp))
+        setitemmax.add(max(cdicttemp.values()))
+
+    minitemcount = min(setitemcount)
+    maxitemmax = max(setitemmax)
+    print("----------------------------------------------------------------")
+    print("minitemcount : %s,  " % minitemcount, end="")
+    print("maxitemmax : %s,  " % maxitemmax)
+    print("\n")
+    for listTuplecombiCdicttemp in listlistTuplecombiCdicttemp :
+        if max(listTuplecombiCdicttemp[1].values()) == maxitemmax : # and len(listTuplecombiCdicttemp[1]) == minitemcount:
+            print("\n" + str(listTuplecombiCdicttemp[0]) + " : ")
+            for key in listTuplecombiCdicttemp[1] :
+                print("\t" + str(key) +"\t:"+ str(listTuplecombiCdicttemp[1][key]))
+        else:
+            print(".", end="")
+
+    """
+    위의 print에서 maxitemmax==7 인 경우를 찾아보면 아래처럼 tuplecombi, tuplerest의 조합이 3가지 나온다. 이를 채택한다.
+    (6, 12, 17, 32) : (18, 31)
+    (14, 15, 26, 35) : (18, 21)
+    (15, 18, 21, 35) : (14, 26)
+    """
+
+    exit()
 
     tableinningno.writeCombiMatchwithTable(4,3,1,clsvar)
 
@@ -753,42 +883,42 @@ if __name__ == "__main__":
     print ( "calculation of number next occurance : ")
     print ( nextsel)
 
-    #마지막 회차 기준으로 다음 회차에 나올 가능성을  listturple형태로 계산하고 sorting.tuple형태 : ( 번호, diffinning, 발생횟수)
-    listturpleNumInningOccurs = nextsel.makeListTurpleNumInningOccurs()
-    listturpleNumInningOccurs = sorted(listturpleNumInningOccurs, key= lambda tripair: tripair[2], reverse=True)
-    print ("Based on the last Inning, possibility of listturpleNumInningOccurs")
-    print (listturpleNumInningOccurs)
+    #마지막 회차 기준으로 다음 회차에 나올 가능성을  listtuple형태로 계산하고 sorting.tuple형태 : ( 번호, diffinning, 발생횟수)
+    listtupleNumInningOccurs = nextsel.makeListtupleNumInningOccurs()
+    listtupleNumInningOccurs = sorted(listtupleNumInningOccurs, key= lambda tripair: tripair[2], reverse=True)
+    print ("Based on the last Inning, possibility of listtupleNumInningOccurs")
+    print (listtupleNumInningOccurs)
 
     # 마지막 회차 기준으로 다음에 나올 수 있는 숫자를 CandidateNoMax 개수만큼 후보자를 구한다.
-    listturplecandidateNoInningOccurs = []
+    listtuplecandidateNoInningOccurs = []
     CandidateNoMax = 9
     occursprev = 10000
 
-    for turpleNumInningOccurs in listturpleNumInningOccurs :
-        no, diffinning, occurs = turpleNumInningOccurs
-        if len(listturplecandidateNoInningOccurs) >= CandidateNoMax  and occursprev > occurs :
+    for tupleNumInningOccurs in listtupleNumInningOccurs :
+        no, diffinning, occurs = tupleNumInningOccurs
+        if len(listtuplecandidateNoInningOccurs) >= CandidateNoMax  and occursprev > occurs :
             break
 
         # no가 이전의 -diffinning에서 존재했는지 조사.
         if no in listlistinningnos[-diffinning][1:] :
-            # listturplecandidateNoInningOccurs에 이미 같은 번호가 있는지 조사한다.
-            if not no in [ NoInningOccurs[0] for NoInningOccurs in listturplecandidateNoInningOccurs  ]:
-                listturplecandidateNoInningOccurs.append(turpleNumInningOccurs)
+            # listtuplecandidateNoInningOccurs에 이미 같은 번호가 있는지 조사한다.
+            if not no in [ NoInningOccurs[0] for NoInningOccurs in listtuplecandidateNoInningOccurs  ]:
+                listtuplecandidateNoInningOccurs.append(tupleNumInningOccurs)
                 occursprev = occurs
 
 
     # 마지막 회차 기준으로 다음 회차에 나올 가능성이 가장 큰 순서대로 집결된 list을 print.
     print ("top 10 list of possibility of occurances:")
-    print (listturplecandidateNoInningOccurs)
+    print (listtuplecandidateNoInningOccurs)
 
 
-    # listturplecandidateNoInningOccurs = list [ turple(no, diffinning, countadvent)]
+    # listtuplecandidateNoInningOccurs = list [ tuple(no, diffinning, countadvent)]
 
-    # listturplecandidateNoInningOccurs 을 기준으로, 숫자6개(lotto 수자 6개 )를 뽑아서 조합을 만들수 있는 경우에 대한 list을 만든다.
-    # list의 내용은 listturplecandidateNoInningOccurs의 index을 지칭한다.
+    # listtuplecandidateNoInningOccurs 을 기준으로, 숫자6개(lotto 수자 6개 )를 뽑아서 조합을 만들수 있는 경우에 대한 list을 만든다.
+    # list의 내용은 listtuplecandidateNoInningOccurs의 index을 지칭한다.
 
     listlistcandidate6index = []
-    sizeCandidatelist = len(listturplecandidateNoInningOccurs)
+    sizeCandidatelist = len(listtuplecandidateNoInningOccurs)
 
     for i in range(sizeCandidatelist):
         for j in range(sizeCandidatelist-1):
@@ -824,7 +954,7 @@ if __name__ == "__main__":
     # index을 숫자로 변화하고, 친밀도를 붙여 list을 만든다.
     listlistcandidate6NoCloseness = []
     for listcandidate6index in listlistcandidate6indexWithoutDup :
-        listcandidate6No = [listturplecandidateNoInningOccurs[index][0] for index in listcandidate6index ]
+        listcandidate6No = [listtuplecandidateNoInningOccurs[index][0] for index in listcandidate6index ]
         listcandidate6No.sort()
         val = closeness.cal6MemberCloseness( listcandidate6No )
         listcandidate6No.append(val)
