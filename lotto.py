@@ -404,14 +404,17 @@ class TableInningNo():
 
         f.close()
 
-    def getlisttupleSubordinateCombi(self, combi):
+    def getdictFreqListcombi(self, combi):
         """
-        self.listlistinningnos에서 combi 만큼 생성된  tuple에 대해 발생 빈도를 계산한다.
+        self.listlistinningnos을 활용하여 , 
+        6개의 숫자에서 추출된 combi 의 발생빈도를 계산한다.
+        return 값은 defaultdict으로  key= 발생빈도, value=  combi의 list
+        
         cdictCombiFrequency : 저장소로,  type은 Dict type의 Counter.
         setCombiFrequency : set type으로  빈도의 수자의 set.
         
-        :param combi: combination할 숫자
-        :return: 빈도 max_1에 해당하는 combi=4인 listtuple을 반환한다.
+        :param combi: combination 숫자
+        :return: defaultdict으로  key= 발생빈도, value=  combi의 list
         """
         cdictCombiFrequency = collections.Counter()
         for listinningnos in self.listlistinningnos :
@@ -422,21 +425,13 @@ class TableInningNo():
         setCombiFrequency = set(cdictCombiFrequency.values())
         # print(setCombiFrequency)
 
-        maxcount = sorted(list(setCombiFrequency), reverse=True)[0]
-        max_1count = sorted(list(setCombiFrequency), reverse=True)[1]
+        ddictFreqListcombi = collections.defaultdict(list)
+        for tuplecombifreq  in cdictCombiFrequency.items() :
+            tuplecombi, freq = tuplecombifreq
+            ddictFreqListcombi[freq].append(tuplecombi)
 
-        # create the truplecombi list of maxcount, max_1couint .
-        listtuplecombimax = []
-        listtuplecombimax_1 = []
-        for tuplecombi in cdictCombiFrequency :
-            if cdictCombiFrequency[tuplecombi] == maxcount :
-                listtuplecombimax.append(tuplecombi)
-            elif cdictCombiFrequency[tuplecombi] == max_1count :
-                listtuplecombimax_1.append(tuplecombi)
-            else:
-                continue
+        return ddictFreqListcombi
 
-        return listtuplecombimax_1
 
 
 
@@ -651,7 +646,7 @@ class   CombiRestCloseness():
             combinrestn , close = combinrestnclose
             tuplecombi, tuplerest = combinrestn
             if tuplecombi == tupletemp :
-                return list(tuplerest)
+                return list(tuplerest), close
 
     def getlisttupleSubordinateRest(self, listcombi):
         """
@@ -735,10 +730,154 @@ if __name__ == "__main__":
     clsvar.combi3rest1close = combi3rest1close
     clsvar.combi4rest1close = combi4rest1close
 
-    #아래의 의도는 combi==4 이고, combi의 발현의 회수가 max-1인 tuplecombi을 list으로 반환받는다
-    # 이유는 발현의 회수가 max이면 다시 발현이 될 수 가 없으므로, 이를 대상에서 제와하면,
-    #  발현의 회수가 max-1이 적절한  조건이다.
-    listtuplecombimax_1 = tableinningno.getlisttupleSubordinateCombi(4)
+    # 아래의 의도는 combination=5 이고, freq=2(max)인  combi를 찾고,
+    # 그 combi의 공통된 특성이  combination=4 인 class에서는  어떤 freq
+    # 에서 많이 출현했는지 관찰하고, 그 후보를 선택한다.
+
+    # 먼저 combination=5 이고, freq=2(max)인  combi list을 구한다.
+    ddictFreqListcombi5 = tableinningno.getdictFreqListcombi(5)
+    combi5MaxFreq = max(ddictFreqListcombi5.keys())
+    print("Combi=5, max = %s" % combi5MaxFreq)
+
+    # combi=5 이면,  최대 빈도는 2 이다. print해서 확인해 본다.
+    # pprint.pprint(ddictFreqListcombi5[combi5MaxClass])
+    '''
+    [(14, 27, 30, 31, 40),
+     (14, 15, 18, 21, 26),
+     (10, 22, 34, 36, 44),
+     (15, 19, 21, 34, 44),
+     (16, 26, 31, 36, 43),
+     (11, 17, 21, 26, 36)] '''
+
+    # combi=4 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
+    ddictFreqListcombi4 = tableinningno.getdictFreqListcombi(4)
+    combi4MaxFreq = max(ddictFreqListcombi4.keys())
+    print("Combi=4, max = %s" % combi4MaxFreq)
+    # pprint.pprint(ddictFreqListcombi4[combi4MaxClass])
+    '''
+    [(12, 24, 27, 32),
+     (16, 34, 42, 45),
+     (17, 32, 33, 34),
+     (2, 4, 31, 34),
+     (14, 22, 35, 39),
+     (11, 26, 29, 44),
+     (1, 8, 18, 29),
+     (4, 20, 26, 35),
+     (3, 13, 33, 37)]
+    '''
+
+    # combi=3 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
+    ddictFreqListcombi3 = tableinningno.getdictFreqListcombi(3)
+    combi3MaxFreq = max(ddictFreqListcombi3.keys())
+    print("Combi=3, max = %s" % combi3MaxFreq)
+
+
+    print("-------------------------------- search combi5 candidate from combi4 class ----------------------")
+    for tuplecombi5 in ddictFreqListcombi5[combi5MaxFreq] :
+        print("combi5 is ", end="")
+        print(tuplecombi5)
+        for freqkey in ddictFreqListcombi4.keys() :
+            for  tuplecombi4 in ddictFreqListcombi4[freqkey] :
+                if tuplecombi4 in itertools.combinations(tuplecombi5, 4 ) :
+                    print(tuplecombi4, end="")
+                    print(" exist in freq %s" % freqkey)
+
+    print("-------------------------------- search combi4 candidate from combi3 class ----------------------")
+    for tuplecombi4 in ddictFreqListcombi4[combi4MaxFreq] :
+        print("combi4 is ", end="")
+        print(tuplecombi4)
+        for freqkey in ddictFreqListcombi3.keys() :
+            for  tuplecombi3 in ddictFreqListcombi3[freqkey] :
+                if tuplecombi3 in itertools.combinations(tuplecombi4, 3 ) :
+                    print(tuplecombi3, end="")
+                    print(" exist in freq %s" % freqkey)
+
+    print("-------------------------------- search combi5 candidate from combi3 class ----------------------")
+    for tuplecombi5 in ddictFreqListcombi5[combi5MaxFreq]:
+        print("combi5 is ", end="")
+        print(tuplecombi5)
+        for freqkey in ddictFreqListcombi3.keys():
+            for tuplecombi3 in ddictFreqListcombi3[freqkey]:
+                if tuplecombi3 in itertools.combinations(tuplecombi5, 3):
+                    print(tuplecombi3, end="")
+                    print(" exist in freq %s" % freqkey)
+
+    # 정리하자면,
+    # combi=5, freq=2 인 경우는  현재 최고의 조합이다. 그러나,  같은 후보를 구하기 위해서는
+    # combi=5, freq=1 인 경우에서 찾아야 하겠지만,   combi=5, freq=1 조합은 모든 inning에서 찾을 수 있으므로
+    # 사실상 의미가 없다.
+
+    # combi=4, freq=3(현재 Max)에서  combi=5, freq=2 조합이 될  후보군을 추출한다.  하지만,
+    # combi=4, freq=3 인 후보군이  될 수 가 없다.  왜냐하면,  combi=4, freq=3 조합이 한 번 더 나오면
+    # 이는 combi=4, freq=4 인 경우가 되고 그런 경우는 현재 나온 이력이 없으므로,  후보군이 될 수 가 없다.
+
+    # 즉 후보군은 combi=4, freq=2 에서 찾아야 한다.  2017.06.03 기준으로 357 개의 후보가 나온다.
+    print("-------------------------------- print combi4 freq=2  ----------------------")
+    pprint.pprint(len(ddictFreqListcombi4[2]))
+
+    print("-------------------------------- condition :  combi4 freq=2  and  restn, close  ----------------------")
+
+    # ddictFreqListcombi4[2] 은 combi=4, freq=2  조합의 list이다.
+    # 친밀도를 구하기 위해  combi3rest2close 을 사용한다.
+    # combi4rest2close 은 절적하지 않다. 이미 포화이므로.
+    #
+    setmax = set()
+    list_close8_tuplecombi4 = []
+    for tuplecombi4 in ddictFreqListcombi4[2] :
+        print("tuplecombi4 : ", end="")
+        print(tuplecombi4)
+        close_sum_for_tuplecombi4 = 0
+        for tuplecombi3 in itertools.combinations(tuplecombi4, 3 ) :
+            restn, close = combi3rest2close.getlistbestrest(list(tuplecombi3))
+            setmax.add(close)
+            close_sum_for_tuplecombi4 += close
+            print("tuplecombi3 : ", end="")
+            print(tuplecombi3, end="")
+            print("  restn : ", end="")
+            print(restn, end="")
+            print("\t\tclose : %s" % close)
+
+        if close_sum_for_tuplecombi4 == 8 :
+            list_close8_tuplecombi4.append(tuplecombi4)
+
+    print("max close is %s" % max(setmax))
+
+    # close을 확인해 보면, max=2 이다.
+    # 그래서 combi=4 조건에서 combi=3을 구하면, 4가지가 나오고, restn=2 인 경우에 대해,
+    # 전부 close= 2,2,2,2 가 나오는 경우 즉 close_sum_for_tuplecombi4 = 8 이 되는 combi=4만 모은다
+    pprint.pprint(list_close8_tuplecombi4)
+
+    print("-------------------------------- list_close8_tuplecombi4 에 대해, 각각 restn을 print하기  ----------------------")
+
+    # list_close8_tuplecombi4 에 있는  combi=4에 대해, (combi=3, restn=2)인 restn을 구하고,
+    # restn 의 각각의 원소의 빈도수를 구해서, 빈도수가 많은 restn을 포함하는 combi=4 를 선택한다.
+
+    ddict_no_freq = collections.defaultdict(int)
+    for tuplecombi4 in list_close8_tuplecombi4 :
+        print("tuplecombi4 : ", end="")
+        print(tuplecombi4 ,end=" ")
+        for tuplecombi3 in itertools.combinations(tuplecombi4, 3 ) :
+            restn, close = combi3rest2close.getlistbestrest(list(tuplecombi3))
+            print(restn, end=" ")
+            for rest in restn :
+                if not rest in list(tuplecombi4) :
+                    ddict_no_freq[rest] += 1
+
+        print(" ")
+
+    pprint.pprint(ddict_no_freq)
+
+    # ddict_no_freq 을 보고서, 가장 빈도수가 큰 숫자를 포함하는 combi=4을 선택하고, restn도 선택한다.
+
+    '''
+    최종적으로 선택한 것은 
+    14, 15, 18, 21, 26, 34  
+    11, 17, 21, 26, 36, 44
+    '''
+
+    exit(0)
+
+
 
     setitemcount = set()
     setitemmax = set()
