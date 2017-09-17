@@ -19,6 +19,8 @@ class TableInningNo():
         self.listdictinningmods = []        # [{inning,mod2,mod3,mod5,mod9,modsum, sum}, {...}, ...]
 
         for line in open(filecsv):
+            if len(line.split()) ==0 :
+                continue
             listno = [int(aa) for aa in line.split(",")]
             self.listlistinningnos.append( listno )
 
@@ -740,20 +742,23 @@ if __name__ == "__main__":
     print("Combi=5, max = %s" % combi5MaxFreq)
 
     # combi=5 이면,  최대 빈도는 2 이다. print해서 확인해 본다.
-    # pprint.pprint(ddictFreqListcombi5[combi5MaxClass])
+    pprint.pprint(ddictFreqListcombi5[combi5MaxFreq])
+
     '''
     [(14, 27, 30, 31, 40),
      (14, 15, 18, 21, 26),
      (10, 22, 34, 36, 44),
      (15, 19, 21, 34, 44),
      (16, 26, 31, 36, 43),
-     (11, 17, 21, 26, 36)] '''
+     (11, 17, 21, 26, 36),
+     (7, 22, 24, 31, 34)  ==> 추가
+     ] '''
 
     # combi=4 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
     ddictFreqListcombi4 = tableinningno.getdictFreqListcombi(4)
     combi4MaxFreq = max(ddictFreqListcombi4.keys())
     print("Combi=4, max = %s" % combi4MaxFreq)
-    # pprint.pprint(ddictFreqListcombi4[combi4MaxClass])
+    pprint.pprint(ddictFreqListcombi4[combi4MaxFreq])
     '''
     [(12, 24, 27, 32),
      (16, 34, 42, 45),
@@ -763,13 +768,19 @@ if __name__ == "__main__":
      (11, 26, 29, 44),
      (1, 8, 18, 29),
      (4, 20, 26, 35),
-     (3, 13, 33, 37)]
+     (3, 13, 33, 37),
+     (9, 12, 39, 43)  ==> 추가
+     ]
     '''
+
+    print("Combi=4, max-1 = %s" % (combi4MaxFreq-1))
+    pprint.pprint(ddictFreqListcombi4[combi4MaxFreq-1])
 
     # combi=3 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
     ddictFreqListcombi3 = tableinningno.getdictFreqListcombi(3)
     combi3MaxFreq = max(ddictFreqListcombi3.keys())
     print("Combi=3, max = %s" % combi3MaxFreq)
+    pprint.pprint(ddictFreqListcombi3[combi3MaxFreq])
 
 
     print("-------------------------------- search combi5 candidate from combi4 class ----------------------")
@@ -782,15 +793,19 @@ if __name__ == "__main__":
                     print(tuplecombi4, end="")
                     print(" exist in freq %s" % freqkey)
 
-    print("-------------------------------- search combi4 candidate from combi3 class ----------------------")
-    for tuplecombi4 in ddictFreqListcombi4[combi4MaxFreq] :
-        print("combi4 is ", end="")
-        print(tuplecombi4)
-        for freqkey in ddictFreqListcombi3.keys() :
-            for  tuplecombi3 in ddictFreqListcombi3[freqkey] :
-                if tuplecombi3 in itertools.combinations(tuplecombi4, 3 ) :
-                    print(tuplecombi3, end="")
-                    print(" exist in freq %s" % freqkey)
+    # ddictFreqListcombi5[combi5MaxFreq=2] 들은 ddictFreqListcombi4[combi4MaxFreq-1 = 2]에서 나오고 있다.
+    # ddictFreqListcombi4[3] 이 이니고.
+    # print("-------------------------------- search ddictFreqListcombi4[combi4MaxFreq-1] candidate from combi3 class ----------------------")
+    # for tuplecombi4 in ddictFreqListcombi4[combi4MaxFreq-1] :
+    #     print("combi4 is ", end="")
+    #     print(tuplecombi4)
+    #     for freqkey in ddictFreqListcombi3.keys() :
+    #         for  tuplecombi3 in ddictFreqListcombi3[freqkey] :
+    #             if tuplecombi3 in itertools.combinations(tuplecombi4, 3 ) :
+    #                 print(tuplecombi3, end="")
+    #                 print(" exist in freq %s" % freqkey)
+    #
+    # 너무 많은 결과가 나와서 의미가 없다.
 
     print("-------------------------------- search combi5 candidate from combi3 class ----------------------")
     for tuplecombi5 in ddictFreqListcombi5[combi5MaxFreq]:
@@ -801,6 +816,86 @@ if __name__ == "__main__":
                 if tuplecombi3 in itertools.combinations(tuplecombi5, 3):
                     print(tuplecombi3, end="")
                     print(" exist in freq %s" % freqkey)
+    # 2017.9.17일 기준으로 바로위의 결과는 다음과 같고, ddictFreqListcombi3[3]에서 주로 후보군이 많이 나온다.
+    '''
+combi5 is (14, 27, 30, 31, 40)
+(14, 27, 31) exist in freq 3
+(14, 27, 40) exist in freq 3
+(27, 30, 31) exist in freq 3
+(27, 30, 40) exist in freq 3
+(27, 31, 40) exist in freq 3
+(30, 31, 40) exist in freq 3
+(14, 30, 40) exist in freq 2
+(14, 30, 31) exist in freq 4
+(14, 31, 40) exist in freq 4
+(14, 27, 30) exist in freq 5
+combi5 is (14, 15, 18, 21, 26)
+(14, 15, 21) exist in freq 3
+(14, 18, 26) exist in freq 3
+(15, 18, 26) exist in freq 3
+(15, 21, 26) exist in freq 3
+(14, 21, 26) exist in freq 2
+(14, 15, 26) exist in freq 4
+(14, 15, 18) exist in freq 4
+(14, 18, 21) exist in freq 4
+(15, 18, 21) exist in freq 4
+(18, 21, 26) exist in freq 4
+combi5 is (10, 22, 34, 36, 44)
+(10, 22, 44) exist in freq 3
+(22, 36, 44) exist in freq 3
+(34, 36, 44) exist in freq 3
+(10, 22, 36) exist in freq 3
+(10, 34, 44) exist in freq 3
+(22, 34, 44) exist in freq 3
+(10, 22, 34) exist in freq 2
+(10, 34, 36) exist in freq 2
+(10, 36, 44) exist in freq 4
+(22, 34, 36) exist in freq 4
+combi5 is (15, 19, 21, 34, 44)
+(19, 34, 44) exist in freq 3
+(15, 19, 44) exist in freq 3
+(15, 21, 44) exist in freq 3
+(15, 34, 44) exist in freq 3
+(15, 19, 21) exist in freq 2
+(19, 21, 44) exist in freq 2
+(19, 21, 34) exist in freq 4
+(21, 34, 44) exist in freq 4
+(15, 19, 34) exist in freq 5
+(15, 21, 34) exist in freq 6
+combi5 is (16, 26, 31, 36, 43)
+(16, 31, 43) exist in freq 3
+(16, 31, 36) exist in freq 3
+(26, 31, 43) exist in freq 3
+(26, 36, 43) exist in freq 3
+(16, 26, 31) exist in freq 2
+(16, 26, 36) exist in freq 2
+(16, 26, 43) exist in freq 2
+(16, 36, 43) exist in freq 2
+(31, 36, 43) exist in freq 2
+(26, 31, 36) exist in freq 4
+combi5 is (11, 17, 21, 26, 36)
+(11, 17, 26) exist in freq 3
+(11, 17, 36) exist in freq 3
+(17, 21, 36) exist in freq 3
+(11, 21, 26) exist in freq 3
+(11, 21, 36) exist in freq 3
+(11, 26, 36) exist in freq 2
+(17, 21, 26) exist in freq 2
+(21, 26, 36) exist in freq 4
+(17, 26, 36) exist in freq 5
+(11, 17, 21) exist in freq 5
+combi5 is (7, 22, 24, 31, 34)
+(7, 22, 24) exist in freq 3
+(7, 24, 34) exist in freq 3
+(7, 22, 31) exist in freq 2
+(7, 24, 31) exist in freq 2
+(7, 31, 34) exist in freq 2
+(22, 24, 31) exist in freq 2
+(22, 24, 34) exist in freq 2
+(24, 31, 34) exist in freq 4
+(22, 31, 34) exist in freq 4
+(7, 22, 34) exist in freq 4
+    '''
 
     # 정리하자면,
     # combi=5, freq=2 인 경우는  현재 최고의 조합이다. 그러나,  같은 후보를 구하기 위해서는
@@ -811,10 +906,24 @@ if __name__ == "__main__":
     # combi=4, freq=3 인 후보군이  될 수 가 없다.  왜냐하면,  combi=4, freq=3 조합이 한 번 더 나오면
     # 이는 combi=4, freq=4 인 경우가 되고 그런 경우는 현재 나온 이력이 없으므로,  후보군이 될 수 가 없다.
 
-    # 즉 후보군은 combi=4, freq=2 에서 찾아야 한다.  2017.06.03 기준으로 357 개의 후보가 나온다.
+
     print("-------------------------------- print combi4 freq=2  ----------------------")
     pprint.pprint(len(ddictFreqListcombi4[2]))
+    print("-------------------------------- print combi3 freq=3  ----------------------")
+    pprint.pprint(len(ddictFreqListcombi3[3]))
 
+    # 즉 후보군은 combi=4, freq=2 에서 찾아야 한다.  2017.09.17 기준으로 378 개의 후보가 나온다.
+    # 즉 후보군은 combi=3, freq=3 에서 찾아야 한다.  2017.06.17 기준으로 1035 개의 후보가 나온다.
+
+    print("-------------------------------- if ddictFreqListcombi3[3] in ddictFreqListcombi4[2] ----------------------")
+    # 다음은 combi=4, freq=2 의 후보군과 combi=3, freq=3 의 후보군의 교집합을 찾아보자.
+    listcombi42combi33 =[]
+    for tuplecombi4 in ddictFreqListcombi4[2]:
+        listcontain = [ set(tuplecombi4).issuperset(set(tuplecombi3)) for tuplecombi3 in ddictFreqListcombi3[3] ]
+        if any(listcontain) :
+            listcombi42combi33.append(tuplecombi4)
+    print("len(listcombi42combi33) = %s"%(len(listcombi42combi33)))
+    # 현재 까지 위의 결론은  2017.06.17 기준으로 318개가 나온다.
     print("-------------------------------- condition :  combi4 freq=2  and  restn, close  ----------------------")
 
     # ddictFreqListcombi4[2] 은 combi=4, freq=2  조합의 list이다.
