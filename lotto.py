@@ -732,6 +732,7 @@ if __name__ == "__main__":
     clsvar.combi3rest1close = combi3rest1close
     clsvar.combi4rest1close = combi4rest1close
 
+    # ----------------------------------------------------------------------------------------
     # 아래의 의도는 combination=5 이고, freq=2(max)인  combi를 찾고,
     # 그 combi의 공통된 특성이  combination=4 인 class에서는  어떤 freq
     # 에서 많이 출현했는지 관찰하고, 그 후보를 선택한다.
@@ -739,10 +740,10 @@ if __name__ == "__main__":
     # 먼저 combination=5 이고, freq=2(max)인  combi list을 구한다.
     ddictFreqListcombi5 = tableinningno.getdictFreqListcombi(5)
     combi5MaxFreq = max(ddictFreqListcombi5.keys())
-    print("Combi=5, max = %s" % combi5MaxFreq)
+    # print("Combi=5, max = %s" % combi5MaxFreq)
 
     # combi=5 이면,  최대 빈도는 2 이다. print해서 확인해 본다.
-    pprint.pprint(ddictFreqListcombi5[combi5MaxFreq])
+    # pprint.pprint(ddictFreqListcombi5[combi5MaxFreq])
 
     '''
     [(14, 27, 30, 31, 40),
@@ -757,8 +758,8 @@ if __name__ == "__main__":
     # combi=4 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
     ddictFreqListcombi4 = tableinningno.getdictFreqListcombi(4)
     combi4MaxFreq = max(ddictFreqListcombi4.keys())
-    print("Combi=4, max = %s" % combi4MaxFreq)
-    pprint.pprint(ddictFreqListcombi4[combi4MaxFreq])
+    # print("Combi=4, max = %s" % combi4MaxFreq)
+    # pprint.pprint(ddictFreqListcombi4[combi4MaxFreq])
     '''
     [(12, 24, 27, 32),
      (16, 34, 42, 45),
@@ -773,25 +774,234 @@ if __name__ == "__main__":
      ]
     '''
 
-    print("Combi=4, max-1 = %s" % (combi4MaxFreq-1))
-    pprint.pprint(ddictFreqListcombi4[combi4MaxFreq-1])
+    # print("Combi=4, max-1 = %s" % (combi4MaxFreq-1))
+    # pprint.pprint(ddictFreqListcombi4[combi4MaxFreq-1])
 
     # combi=3 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
     ddictFreqListcombi3 = tableinningno.getdictFreqListcombi(3)
     combi3MaxFreq = max(ddictFreqListcombi3.keys())
-    print("Combi=3, max = %s" % combi3MaxFreq)
-    pprint.pprint(ddictFreqListcombi3[combi3MaxFreq])
+    # print("Combi=3, max = %s" % combi3MaxFreq)
+    # pprint.pprint(ddictFreqListcombi3[combi3MaxFreq])
 
+    # combi=2 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
+    ddictFreqListcombi2 = tableinningno.getdictFreqListcombi(2)
+    combi2MaxFreq = max(ddictFreqListcombi2.keys())
 
-    print("-------------------------------- search combi5 candidate from combi4 class ----------------------")
-    for tuplecombi5 in ddictFreqListcombi5[combi5MaxFreq] :
-        print("combi5 is ", end="")
-        print(tuplecombi5)
-        for freqkey in ddictFreqListcombi4.keys() :
-            for  tuplecombi4 in ddictFreqListcombi4[freqkey] :
-                if tuplecombi4 in itertools.combinations(tuplecombi5, 4 ) :
-                    print(tuplecombi4, end="")
-                    print(" exist in freq %s" % freqkey)
+    # 각 ddictFreqListcombi에 대해 조합의 수를 print한다.
+
+    for freq in sorted(list(ddictFreqListcombi5.keys())) :
+        if freq == 1 :
+            continue
+        print("Combi=5, freq=%s, count=%s"%(freq, len(ddictFreqListcombi5[freq])))
+
+    for freq in sorted(list(ddictFreqListcombi4.keys())) :
+        if freq == 1 :
+            continue
+        print("Combi=4, freq=%s, count=%s"%(freq, len(ddictFreqListcombi4[freq])))
+
+    for freq in sorted(list(ddictFreqListcombi3.keys())) :
+        if freq == 1 :
+            continue
+        print("Combi=3, freq=%s, count=%s"%(freq, len(ddictFreqListcombi3[freq])))
+
+    for freq in sorted(list(ddictFreqListcombi2.keys())) :
+        if freq == 1 :
+            continue
+        print("Combi=2, freq=%s, count=%s"%(freq, len(ddictFreqListcombi2[freq])))
+
+    alloutput = '''
+    Combi=5, freq=2, count=7
+    Combi=4, freq=2, count=378
+    Combi=4, freq=3, count=10
+    Combi=3, freq=2, count=2847
+    Combi=3, freq=3, count=1035
+    Combi=3, freq=4, count=265
+    Combi=3, freq=5, count=55
+    Combi=3, freq=6, count=11
+    Combi=2, freq=2, count=2
+    Combi=2, freq=3, count=1
+    Combi=2, freq=4, count=3
+    Combi=2, freq=5, count=15
+    Combi=2, freq=6, count=35
+    Combi=2, freq=7, count=46
+    Combi=2, freq=8, count=65
+    Combi=2, freq=9, count=82
+    Combi=2, freq=10, count=114
+    Combi=2, freq=11, count=131
+    Combi=2, freq=12, count=113
+    Combi=2, freq=13, count=99
+    Combi=2, freq=14, count=86
+    Combi=2, freq=15, count=78
+    Combi=2, freq=16, count=35
+    Combi=2, freq=17, count=37
+    Combi=2, freq=18, count=16
+    Combi=2, freq=19, count=15
+    Combi=2, freq=20, count=8
+    Combi=2, freq=21, count=4
+    Combi=2, freq=22, count=2
+    Combi=2, freq=23, count=1
+    Combi=2, freq=24, count=1
+    '''
+
+    print("-------------------------------- search a proper freq of combi4freq class to search combi5freq2 candidate  ----------------------")
+
+    listfreq = list(ddictFreqListcombi4.keys())
+    listfreq.remove(1)
+    listfreq.sort()
+    for freq in listfreq:
+        listcombi = ddictFreqListcombi4[freq]
+        countcombi = len(listcombi)
+        sum = 0
+        for tuplecombi5 in ddictFreqListcombi5[2]:
+            listsuperset = [set(tuplecombi5).issuperset(set(tuplecombi)) for tuplecombi in listcombi ]
+            sum += listsuperset.count(True)
+        print("combi5freq2, combi4freq%s, rate=%s"%(freq, sum/countcombi ))
+
+    print("-------------------------------- search a proper freq of combi3freq class to search combi5freq2 candidate  ----------------------")
+
+    listfreq = list(ddictFreqListcombi3.keys())
+    listfreq.remove(1)
+    listfreq.sort()
+    for freq in listfreq:
+        listcombi = ddictFreqListcombi3[freq]
+        countcombi = len(listcombi)
+        sum = 0
+        for tuplecombi5 in ddictFreqListcombi5[2]:
+            listsuperset = [set(tuplecombi5).issuperset(set(tuplecombi)) for tuplecombi in listcombi]
+            sum += listsuperset.count(True)
+        print("combi5freq2, combi3freq%s, rate=%s" % (freq, sum / countcombi))
+
+    print("-------------------------------- search a proper freq of combi2freq class to search combi5freq2 candidate  ----------------------")
+
+    listfreq = list(ddictFreqListcombi2.keys())
+    listfreq.remove(1)
+    listfreq.sort()
+    for freq in listfreq:
+        listcombi = ddictFreqListcombi2[freq]
+        countcombi = len(listcombi)
+        sum = 0
+        for tuplecombi5 in ddictFreqListcombi5[2]:
+            listsuperset = [set(tuplecombi5).issuperset(set(tuplecombi)) for tuplecombi in listcombi]
+            sum += listsuperset.count(True)
+        print("combi5freq2, combi2freq%s, rate=%s" % (freq, sum / countcombi))
+
+    output = '''
+    ------- search a proper freq of combi4freq class to search combi5freq2 candidate  ----------------------
+    combi5freq2, combi4freq2, rate=0.09259259259259259
+    combi5freq2, combi4freq3, rate=0.0
+    ------- search a proper freq of combi3freq class to search combi5freq2 candidate  ----------------------
+    combi5freq2, combi3freq2, rate=0.006322444678609062
+    combi5freq2, combi3freq3, rate=0.02995169082125604
+    combi5freq2, combi3freq4, rate=0.06037735849056604
+    combi5freq2, combi3freq5, rate=0.07272727272727272
+    combi5freq2, combi3freq6, rate=0.09090909090909091
+    ------- search a proper freq of combi2freq class to search combi5freq2 candidate  ----------------------
+    combi5freq2, combi2freq2, rate=0.0
+    combi5freq2, combi2freq3, rate=0.0
+    combi5freq2, combi2freq4, rate=0.0
+    combi5freq2, combi2freq5, rate=0.0
+    combi5freq2, combi2freq6, rate=0.0
+    combi5freq2, combi2freq7, rate=0.0
+    combi5freq2, combi2freq8, rate=0.0
+    combi5freq2, combi2freq9, rate=0.012195121951219513
+    combi5freq2, combi2freq10, rate=0.03508771929824561
+    combi5freq2, combi2freq11, rate=0.07633587786259542
+    combi5freq2, combi2freq12, rate=0.035398230088495575
+    combi5freq2, combi2freq13, rate=0.12121212121212122
+    combi5freq2, combi2freq14, rate=0.10465116279069768
+    combi5freq2, combi2freq15, rate=0.1282051282051282
+    combi5freq2, combi2freq16, rate=0.11428571428571428
+    combi5freq2, combi2freq17, rate=0.16216216216216217
+    combi5freq2, combi2freq18, rate=0.125
+    combi5freq2, combi2freq19, rate=0.2
+    combi5freq2, combi2freq20, rate=0.25
+    combi5freq2, combi2freq21, rate=0.25
+    combi5freq2, combi2freq22, rate=0.5
+    combi5freq2, combi2freq23, rate=1.0
+    combi5freq2, combi2freq24, rate=0.0
+    '''
+
+    # combi5freq2의 후보는  각  combi의 발생했던 숫자들을 고려하여,
+    # combi4freq2 ( 378 개)
+    # combi3freq5 ( 55개, 근데 combi3freq6 은 추가로 나올 수 없다.  freq=6이 최고 이므로 )
+    # combi2freq17(37개), combi2freq18(16개), combi2freq19(15개)
+
+    # combi4freq2 에서 combi3freq5의 교집합은 ?
+    print("---- listcombi4CandidateFromCombi3freq5 ----")
+    setCombi4candidate = set()
+    for combituple4 in ddictFreqListcombi4[2] :
+        countboolcombisuperset = [ set(combituple4).issuperset(combituple3) for combituple3 in ddictFreqListcombi3[5]].count(True)
+        if countboolcombisuperset > 1 :
+            setCombi4candidate.add(combituple4)
+            print("%s:%s"%(combituple4, countboolcombisuperset))
+
+    # combi4freq2 에서 combi2freq17의 교집합은 ?
+    print("---- listcombi4CandidateFromCombi2freq17 ----")
+    for combituple4 in ddictFreqListcombi4[2]:
+        countboolcombisuperset = [set(combituple4).issuperset(combituple2) for combituple2 in
+                                  ddictFreqListcombi2[17]].count(True)
+        if countboolcombisuperset > 1:
+            setCombi4candidate.add(combituple4)
+            print("%s:%s" % (combituple4, countboolcombisuperset))
+
+    # combi4freq2 에서 combi2freq18의 교집합은 ?
+    print("---- listcombi4CandidateFromCombi2freq18 ----")
+    for combituple4 in ddictFreqListcombi4[2]:
+        countboolcombisuperset = [set(combituple4).issuperset(combituple2) for combituple2 in
+                                  ddictFreqListcombi2[18]].count(True)
+        if countboolcombisuperset > 1:
+            setCombi4candidate.add(combituple4)
+            print("%s:%s" % (combituple4, countboolcombisuperset))
+
+    # combi4freq2 에서 combi2freq19의 교집합은 ?
+    print("---- listcombi4CandidateFromCombi2freq19 ----")
+    for combituple4 in ddictFreqListcombi4[2]:
+        countboolcombisuperset = [set(combituple4).issuperset(combituple2) for combituple2 in
+                                  ddictFreqListcombi2[19]].count(True)
+        if countboolcombisuperset > 1:
+            setCombi4candidate.add(combituple4)
+            print("%s:%s" % (combituple4, countboolcombisuperset))
+    print("====== total sum : %s======" %(len(setCombi4candidate)))
+    pprint.pprint(setCombi4candidate)
+
+    output = '''
+    ====== total sum : 35======
+    {(1, 2, 8, 38),
+     (1, 3, 8, 42),
+     (1, 6, 17, 28),
+     (1, 10, 20, 40),
+     (1, 12, 18, 23),
+     (2, 3, 20, 27),
+     (2, 5, 11, 39),
+     (2, 15, 21, 34), : 3 번
+     (2, 15, 28, 34),
+     (2, 16, 19, 34),
+     (2, 19, 34, 45), : 3 번 
+     (3, 11, 37, 43),
+     (4, 7, 19, 40),
+     (4, 7, 33, 40),
+     (4, 12, 24, 27),
+     (7, 11, 13, 33),
+     (7, 24, 37, 40),
+     (7, 37, 38, 40),
+     (8, 19, 25, 34),
+     (11, 13, 33, 37),
+     (11, 23, 29, 44),
+     (12, 32, 33, 40),
+     (13, 25, 29, 33),
+     (13, 33, 37, 45),
+     (14, 15, 18, 21),
+     (14, 15, 21, 26),
+     (14, 18, 21, 26),
+     (14, 19, 25, 34),
+     (15, 19, 21, 34),
+     (17, 31, 37, 40),
+     (18, 21, 23, 39),
+     (19, 21, 34, 44),
+     (19, 25, 26, 27),
+     (19, 25, 41, 45),
+     (24, 32, 33, 40)}  
+    '''
 
     # ddictFreqListcombi5[combi5MaxFreq=2] 들은 ddictFreqListcombi4[combi4MaxFreq-1 = 2]에서 나오고 있다.
     # ddictFreqListcombi4[3] 이 이니고.
