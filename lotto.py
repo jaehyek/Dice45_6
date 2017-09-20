@@ -1003,6 +1003,17 @@ if __name__ == "__main__":
      (24, 32, 33, 40)}  
     '''
 
+    # combi3freq5 에서 combi2freq17의 교집합은 ?
+    print("---- listcombi3CandidateFromCombi2freq17 ----")
+    for combituple3 in ddictFreqListcombi3[5]:
+        countboolcombisuperset = [set(combituple4).issuperset(combituple2) for combituple2 in
+                                  ddictFreqListcombi2[19]].count(True)
+        if countboolcombisuperset > 1:
+            setCombi4candidate.add(combituple4)
+            print("%s:%s" % (combituple4, countboolcombisuperset))
+
+
+
     # ddictFreqListcombi5[combi5MaxFreq=2] 들은 ddictFreqListcombi4[combi4MaxFreq-1 = 2]에서 나오고 있다.
     # ddictFreqListcombi4[3] 이 이니고.
     # print("-------------------------------- search ddictFreqListcombi4[combi4MaxFreq-1] candidate from combi3 class ----------------------")
