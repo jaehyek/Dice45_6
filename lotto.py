@@ -961,11 +961,11 @@ if __name__ == "__main__":
         if countboolcombisuperset > 1:
             setCombi4candidate.add(combituple4)
             print("%s:%s" % (combituple4, countboolcombisuperset))
-    print("====== total sum : %s======" %(len(setCombi4candidate)))
+    print("====== combituple4 total sum : %s======" %(len(setCombi4candidate)))
     pprint.pprint(setCombi4candidate)
 
     output = '''
-    ====== total sum : 35======
+    ====== combituple4 total sum : 35======
     {(1, 2, 8, 38),
      (1, 3, 8, 42),
      (1, 6, 17, 28),
@@ -973,10 +973,10 @@ if __name__ == "__main__":
      (1, 12, 18, 23),
      (2, 3, 20, 27),
      (2, 5, 11, 39),
-     (2, 15, 21, 34), : 3 번
+     (2, 15, 21, 34), : 3 번 ( 후보 )
      (2, 15, 28, 34),
      (2, 16, 19, 34),
-     (2, 19, 34, 45), : 3 번 
+     (2, 19, 34, 45), : 3 번 ( 후보 )
      (3, 11, 37, 43),
      (4, 7, 19, 40),
      (4, 7, 33, 40),
@@ -1003,16 +1003,55 @@ if __name__ == "__main__":
      (24, 32, 33, 40)}  
     '''
 
+    # combi2을 찾기 위해서
     # combi3freq5 에서 combi2freq17의 교집합은 ?
-    print("---- listcombi3CandidateFromCombi2freq17 ----")
-    for combituple3 in ddictFreqListcombi3[5]:
-        countboolcombisuperset = [set(combituple4).issuperset(combituple2) for combituple2 in
-                                  ddictFreqListcombi2[19]].count(True)
-        if countboolcombisuperset > 1:
-            setCombi4candidate.add(combituple4)
-            print("%s:%s" % (combituple4, countboolcombisuperset))
+    print("---- listCombi2freq17CandidateFromCombi3freq5 ----")
+    setCombi2candidate = set()
+    for combituple2 in ddictFreqListcombi2[17]:
+        countboolcombisubset = [set(combituple2).issubset(combituple3) for combituple3 in
+                                  ddictFreqListcombi3[5]].count(True)
+        if countboolcombisubset > 1:
+            setCombi2candidate.add(combituple2)
+            print("%s:%s" % (combituple2, countboolcombisubset))
 
+    print("---- listCombi2freq18CandidateFromCombi3freq5 ----")
+    for combituple2 in ddictFreqListcombi2[18]:
+        countboolcombisubset = [set(combituple2).issubset(combituple3) for combituple3 in
+                                ddictFreqListcombi3[5]].count(True)
+        if countboolcombisubset > 1:
+            setCombi2candidate.add(combituple2)
+            print("%s:%s" % (combituple2, countboolcombisubset))
 
+    print("---- listCombi2freq19CandidateFromCombi3freq5 ----")
+    for combituple2 in ddictFreqListcombi2[19]:
+        countboolcombisubset = [set(combituple2).issubset(combituple3) for combituple3 in
+                                ddictFreqListcombi3[5]].count(True)
+        if countboolcombisubset > 1:
+            setCombi2candidate.add(combituple2)
+            print("%s:%s" % (combituple2, countboolcombisubset))
+
+    print("====== combituple2 total sum : %s======" % (len(setCombi2candidate)))
+    pprint.pprint(setCombi2candidate)
+
+    output = '''
+    ---- listCombi2freq17CandidateFromCombi3freq5 ----
+    (18, 31):2
+    (34, 45):2
+    ---- listCombi2freq18CandidateFromCombi3freq5 ----
+    (29, 44):3 --> ( 후보 )
+    ---- listCombi2freq19CandidateFromCombi3freq5 ----
+    (34, 44):2
+    (12, 24):2
+    ====== combituple2 total sum : 5======
+    {(12, 24), (34, 45), (29, 44), (34, 44), (18, 31)}
+    '''
+    # 위의 combituple4 의 후보와 combituple2 의 후보를 결합하여 최종 숫자를 완성한다.
+    decision = '''
+    (2, 15, 21, 34) + (29, 44)
+    (2, 19, 34, 45) + (29, 44)
+    '''
+
+    exit(0)
 
     # ddictFreqListcombi5[combi5MaxFreq=2] 들은 ddictFreqListcombi4[combi4MaxFreq-1 = 2]에서 나오고 있다.
     # ddictFreqListcombi4[3] 이 이니고.
