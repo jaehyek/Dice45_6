@@ -767,17 +767,24 @@ class   CombiCloseness():
     def getListSortlistCountTuplecombi(self):
         return self.listsortlistCountTuplecombi
 
-    def getBestCombiFromGiven1(self, no):
+
+    def getBestCombiFromGivenTuple(self, tuplenos):
         '''
-        주어지는 하나의 숫자에 대해, 가장 확률이 놓은 best combi을 list으로 반환한다.
+        주어지는 두개의 숫자에 대해, 가장 확률이 놓은 best combi을 list으로 반환한다.
         :param no:
         :return:
         '''
+
+        # 먼저 listnos의 개수는  self.ncombi 보다 개수가 작아야 한다.
+        if len(tuplenos) >= self.ncombi :
+            raise  Exception("Listnos의 개수가 너무 크다.")
+            exit(0)
+
         found = False
         bestcount = 0
         listtuple = []
         for count, tuplecombi in self.listsortlistCountTuplecombi :
-            if no in tuplecombi :
+            if tuplenos in itertools.combinations(tuplecombi, len(tuplenos)) :
                 if found == False : #처음 발견
                     found = True
                     bestcount = count
@@ -1058,8 +1065,8 @@ class   CombiRestCloseness():
 전략3)
     . 6개의 숫자중 min 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - min
     . 6개의 숫자중 max 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - max
-    . min에서 가장 closeness가 좋은 숫자를 구한다.   --> minness 라 명명.  --> listminness을 구함.
-    . max에서 가장 closeness가 좋은 숫자를 구한다.   --> maxness라 명명.   --> listmaxness을 구함.
+    . min에서 가장 closeness가 좋은 숫자를 구한다.   -->  minc 라 명명.  --> listminminc을 구함.
+    . max에서 가장 closeness가 좋은 숫자를 구한다.   --> maxcs라 명명.   --> listmaxmaxc을 구함.
     . 45개의 숫자에서  위의 min group을 빼고,  max group을 빼고,  minness을 빼고, maxness을 빼고, 나머지에서 
        2 숫자를 추출하여 combi2을 만들고,   min minness max maxness combi2을 합하여 combi6을 만들고, 
     . combi6에 대해
@@ -1075,10 +1082,10 @@ class   CombiRestCloseness():
 전략4)
     . 6개의 숫자중 min 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - min
     . 6개의 숫자중 max 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - max
-    . min에서 가장 closeness가 좋은 숫자를 구한다.   --> minness 라 명명.  --> listminness을 구함.
-    . max에서 가장 closeness가 좋은 숫자를 구한다.   --> maxness라 명명.   --> listmaxness을 구함.
-    . min, minness와 가장 closeness가 좋은 tuple을 구한다. 즉 (min, minness, minminness )
-    . max, maxness와 가장 closeness가 좋은 tuple을 구한다. 즉 (max, maxness, maxmaxness )
+    . min에서 가장 closeness가 좋은 숫자를 구한다.   --> minc 라 명명.  --> listminmincminc2을 구함.
+    . max에서 가장 closeness가 좋은 숫자를 구한다.   --> maxc 명명.   --> listmaxness을 구함.
+    . min, minness와 가장 closeness가 좋은 tuple을 구한다. 즉 (min, minc, mincc )
+    . max, maxness와 가장 closeness가 좋은 tuple을 구한다. 즉 (max, maxc, maxcc )
     . (min, minness, minminness ) 와 (max, maxness, maxmaxness )을 합하여 combi6에 대해
         get_Probability_from_dictNumFreq()      --> 각 숫자의 빈도수에 대한 확률의 합.
         get_Modn_Probability(2, listcombi6)     --> mod 2을 했을 때, pattern에 의한 확률
@@ -1101,7 +1108,7 @@ if __name__ == "__main__":
     tableinningno = TableInningNo("lotto.csv")
     listlistinningnos = tableinningno.getlistlistInningNos()      # 차수, 당첨번호 list
 
-    Stratey = 3
+    Stratey = 4
 
     if Stratey == 1 :
 
@@ -1229,14 +1236,14 @@ if __name__ == "__main__":
         combi2closeness = CombiCloseness(2, listlistinningnos)
         listtupleminness = []
         for no in listEffectiveNum80_min :
-            listtupleminness += combi2closeness.getBestCombiFromGiven1(no)
+            listtupleminness += combi2closeness.getBestCombiFromGivenTuple((no,))
 
         # 4) ------------------------------------------------------------------
         # listEffectiveNum80_max에 closeness가 좋은  (max,maxness) list 을 구한다.
 
         listtuplemaxness = []
         for no in listEffectiveNum80_max:
-            listtuplemaxness += combi2closeness.getBestCombiFromGiven1(no)
+            listtuplemaxness += combi2closeness.getBestCombiFromGivenTuple((no,))
 
         # 5) ------------------------------------------------------------------
         # 45개의 숫자에서  위의 min group을 빼고,  max group을 빼고,  minness을 빼고, maxness을 빼고, 나머지에서
@@ -1301,10 +1308,144 @@ if __name__ == "__main__":
          [14848255.562978264, [7, 20, 23, 26, 36, 39]],
          [14637317.769698134, [3, 19, 20, 22, 36, 39]]]
         '''
-    else :
-        print("--------------------------------------------------------")
-        print("----------------  Not yet implemented   ----------------")
+    elif Stratey == 4  :
+        # 1) ------------------------------------------------------------------
+        # 각 inning중에, 최소 숫자에 대해, 그 빈도를 구하고, 빈도가 큰 것 부터 누적하여
+        #  80%에 해당하는 최소 숫자의 list을 구한다.
+        minnumfreq = MinNumFreq(listlistinningnos)
+        listEffectiveNum80_min = minnumfreq.get_listEffectiveNum80()
+
+        # 2) ------------------------------------------------------------------
+        # 각 inning중에, 최대 숫자에 대해, 그 빈도를 구하고, 빈도가 큰 것 부터 누적하여
+        #  80%에 해당하는 최대 숫자의 list을 구한다.
+        maxnumfreq = MaxNumFreq(listlistinningnos)
+        listEffectiveNum80_max = maxnumfreq.get_listEffectiveNum80()
+
+        # 3) ------------------------------------------------------------------
+        # listEffectiveNum80_min에 closeness가 좋은  (min,minness) list 을 구한다.
+
+        combi2closeness = CombiCloseness(2, listlistinningnos)
+        listtupleminminc = []
+        for no in listEffectiveNum80_min:
+            listtupleminminc += combi2closeness.getBestCombiFromGivenTuple((no,))
+
+        # 4) ------------------------------------------------------------------
+        # listEffectiveNum80_max에 closeness가 좋은  (max,maxness) list 을 구한다.
+
+        listtuplemaxmaxc = []
+        for no in listEffectiveNum80_max:
+            listtuplemaxmaxc += combi2closeness.getBestCombiFromGivenTuple((no,))
+
+        # 5) ------------------------------------------------------------------
+        # min, minness와 가장 closeness가 좋은 tuple을 구한다. 즉 (min, minness, minminness )
+        combi3closeness = CombiCloseness(3, listlistinningnos)
+
+        listtupleminmincmincc = []
+        for tupleminminc in listtupleminminc :
+            listtupleminmincmincc += combi3closeness.getBestCombiFromGivenTuple(tupleminminc)
+
+        # 6) ------------------------------------------------------------------
+        # max, maxness와 가장 closeness가 좋은 tuple을 구한다. 즉 (max, maxness, maxmaxness )
+        listtuplemaxmaxcmaxcc = []
+        for tuplemaxmaxc in listtuplemaxmaxc:
+            listtuplemaxmaxcmaxcc += combi3closeness.getBestCombiFromGivenTuple(tuplemaxmaxc)
+
+        # 7) ------------------------------------------------------------------
+        # max, maxness와 가장 closeness가 좋은 tuple을 구한다. 즉 (max, maxness, maxmaxness )
+
+        primefreq = PrimeFreq(listlistinningnos)
+        listlistProbListcombi6 = []
+        listlistProbListcombi5 = []     # combi5 이하인 것을 모은다.
+
+        looptotal = len(listtupleminmincmincc) * len(listtuplemaxmaxcmaxcc)
+        remainedlooptotal = looptotal
+
+        for tupleminmincmincc in listtupleminmincmincc:
+            for tuplemaxmaxcmaxcc in listtuplemaxmaxcmaxcc:
+
+                remainedlooptotal -= 1
+                print("remained looptotal : %d" % remainedlooptotal)
+
+                listcombi6 = list(tupleminmincmincc) + list(tuplemaxmaxcmaxcc)
+                listcombi6 = list(set(listcombi6))              # 중복 제거를 위해
+                listcombi6.sort()
+
+                if len(listcombi6) != 6 :
+                    print("Not lenght 6 :" + str(listcombi6))
+                    listlistProbListcombi5.append(listcombi6)
+                    continue
+
+                ## [1,2,3,4,5,6] 6개의 각각의 숫자에 대해 빈도수를 합산하여 percentage을 구한다.
+                no_freq_probability = tableinningno.get_Probability_from_dictNumFreq(listcombi6) * 100
+
+                ## [1,2,3,4,5,6] 6개의 숫자에 각각 mod n 을 실행하고, 빈도수를 key 패턴으로 할 때, 주어진 패턴 확률를 구한다.
+                mod2_probability = tableinningno.get_Modn_Probability(2, listcombi6) * 100
+                mod3_probability = tableinningno.get_Modn_Probability(3, listcombi6) * 100
+                mod5_probability = tableinningno.get_Modn_Probability(5, listcombi6) * 1000
+                mod7_probability = tableinningno.get_Modn_Probability(7, listcombi6) * 1000
+                mod9_probability = tableinningno.get_Modn_Probability(9, listcombi6) * 1000
+                primepattern_probability = primefreq.getPrimeCountPatternProbability(listcombi6) * 10
+
+                total_prob = no_freq_probability * mod2_probability * mod3_probability * mod5_probability * \
+                             mod7_probability * mod9_probability * primepattern_probability
+                listlistProbListcombi6.append([total_prob, listcombi6])
+
+        # sort
+        print("looptotal : %d" % looptotal)
+        print("sorting...")
+        listlistProbListcombi6 = sorted(listlistProbListcombi6,
+                                        key=lambda listProbListcombi6: listProbListcombi6[0],
+                                        reverse=True)
+
+        # 상위 10개 추출
+        listlistProbListcombi6 = listlistProbListcombi6[0:10]
+
+        #
+        pprint.pprint(listlistProbListcombi6)
+
+        # listlistProbListcombi5을 처리한다.
+        #
+        listlistcombi4 = []
+        listlistcombi5 = []
+        while( len(listlistProbListcombi5) > 0 ):
+            listtemp = listlistProbListcombi5.pop()
+            if len(listtemp) == 5 :
+                listlistcombi5.append(listtemp)
+            elif len(listtemp) == 4 :
+                listlistcombi4.append(listtemp)
+
+        # combi4 을 포함하는 combi5을  listlistcombi5에서 찾아서 print한다.
+        for  listcombi5 in listlistcombi5 :
+            for listcombi4 in listlistcombi4 :
+                if set(listcombi5).issuperset(set(listcombi4)) :
+                    print(str(listcombi4) + " : " + str(listcombi5))
+
+
+
+
         exit(0)
+
+        '''
+        [[13956489.684306161, [1, 2, 19, 33, 35, 36]],
+         [10137410.194234882, [6, 17, 28, 36, 39, 40]],
+         [6456033.970150298, [1, 5, 6, 34, 37, 38]],
+         [4135602.4222009843, [3, 20, 25, 33, 36, 44]],
+         [4135602.4222009843, [3, 20, 25, 33, 36, 44]],
+         [3641326.5745393103, [6, 17, 25, 28, 33, 36]],
+         [3641326.5745393103, [6, 17, 25, 28, 33, 36]],
+         [3614069.5018205964, [5, 6, 11, 28, 34, 44]],
+         [3531621.685352094, [1, 3, 20, 31, 34, 44]],
+         [3426588.9286397556, [3, 20, 21, 22, 24, 37]]]
+        [8, 34, 36, 39] : [8, 25, 34, 36, 39]
+        [8, 34, 36, 39] : [8, 25, 34, 36, 39]
+        [8, 34, 36, 39] : [8, 27, 34, 36, 39]
+        [8, 34, 36, 39] : [8, 17, 34, 36, 39]
+        [5, 27, 35, 43] : [5, 17, 27, 35, 43]
+        [5, 27, 34, 44] : [5, 27, 34, 35, 44]
+        [5, 27, 35, 43] : [5, 27, 34, 35, 43]
+        [5, 27, 34, 44] : [5, 27, 31, 34, 44]
+        [1, 5, 34, 44] : [1, 5, 31, 34, 44]
+        '''
 
 
 
