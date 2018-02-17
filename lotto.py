@@ -15,8 +15,10 @@ class CLSVAR():
 class TableInningNo():
     def __init__(self, filecsv):
         self.listlistinningnos = []         # [[inning, no1,on2,no3,no4,no5,no6],[...],...]
+        self.dictNumFreq = {}               # { 1:freq, 2:freq, ... }
+
         self.listtupleNoFreqSorted = []     # [(no1, freq),(no2,freq),...]  sorted on freq
-        self.listdictinningmods = []        # [{inning,mod2,mod3,mod5,mod9,modsum, sum}, {...}, ...]
+        self.listdictinningmods = []        # [{inning,mod2,mod3,mod5,mod9,modall, sum}, {...}, ...]
 
         for line in open(filecsv):
             if len(line.split()) ==0 :
@@ -26,14 +28,98 @@ class TableInningNo():
 
         # sorting based on inning
         self.listlistinningnos = sorted(self.listlistinningnos, key=lambda listInningNos: listInningNos[0] )
-        self.createlistdictModBalanceWithTable()
+        self.createdictNumFreq()
+
+        #--------------------------------------
+
         self.createlisttupleNoFreqSorted()
+        self.createlistdictModBalanceWithTable()
+
 
     def getlistlistInningNos(self):
         return self.listlistinningnos
 
     def getNosWithInning(self, inning):
         return self.listlistinningnos[inning-1][1:]
+
+    def createdictNumFreq(self):
+        dictNumFreq = collections.defaultdict(int)
+        for listno in self.listlistinningnos:
+            for no in listno[1:]:
+                dictNumFreq[int(no)] += 1
+
+        self.dictNumFreq = dictNumFreq ;
+
+    def get_Probability_from_dictNumFreq(self, listnos):
+        '''
+        listnos의 6개의 숫자 각각이 나타났던 빈도수를 합하여 percentage으로 return한다.
+        :param listnos:
+        :return:
+        '''
+
+        ## 먼저 전체 숫자 개수를 구한다.
+        ntotal = len(self.listlistinningnos) * 6
+
+        ## 각각의 숫자에 대해 빈도수를 구한다.
+        nsubtotal = 0
+        for no in listnos :
+            nsubtotal += self.dictNumFreq[no]
+
+        return nsubtotal / ntotal
+
+
+    def get_Modn_Probability(self, Modn, listnos):
+        '''
+        각 innning 별로, 6 숫자들을 Modular 을 했을 때,
+        Mod0 =개수 Mod1=개수 를 dict type key으로 하고, 해당 빈도수를 개수로 count하며,
+        parameter listno에 대해 percentage을 return한다.
+
+        예를 들면,  mod 3 인 경우  mod0:1개, mod1:2개, mod2:3개 나올 수 있고,
+        key value 는 "123"이 된다.  아래 dictModstrCount는 key에 해당하는 빈도수를 count한다.
+
+        return 값은  parameter listno을  key으로 변환하고,  dictModstrCount에서 찾아서
+        전체 대비, percentage 값으로 반환한다.
+
+        그리고 반복하여 call 경우을 대비하여,  각 Modn에 대비 strAttributename에
+        통계정보인 dictModstrCount를 저장한다.
+
+        :param Modn: modular n
+        :param listnos:
+        :return:
+        '''
+
+        # 먼저 class내에 dictModstrCount_Modn 이라는 attribute가 있는지 확인하다.
+        strAttributename = "dictModstrCount_" + str(Modn)
+        if not hasattr(self, strAttributename) :
+            dictModstrCount = collections.defaultdict(int)
+            for listinningnos in self.listlistinningnos :
+                listmodcount = [ 0 for aa in range(Modn)]
+                for no in listinningnos[1:] :
+                    listmodpos = no % Modn
+                    listmodcount[listmodpos] += 1
+                # mod type 을  str형태로 key을 만든다.
+                modkey = "".join([str(aa) for aa in listmodcount])
+                dictModstrCount[modkey] += 1
+
+            self.__dict__[strAttributename] = dictModstrCount
+        else:
+            dictModstrCount = self.__dict__[strAttributename]
+
+        # parameter에 대한 key str 을 생성
+        listmodcount = [0 for aa in range(Modn)]
+        for no in listnos:
+            listmodpos = no % Modn
+            listmodcount[listmodpos] += 1
+        modkey = "".join([str(aa) for aa in listmodcount])
+        freq = dictModstrCount.get(modkey, 0)
+
+
+        return freq / len(self.listlistinningnos)
+
+
+
+    # ========================================================
+
 
     def createlisttupleNoFreqSorted(self):
         dictNumFreq = {}
@@ -48,6 +134,8 @@ class TableInningNo():
 
         # 당점된 횟수가 많은 것 부터 나열하기.
         self.listtupleNoFreqSorted = sorted( listtupleNoFreqSorted, key=lambda tupleNoFreq: tupleNoFreq[1], reverse=True)
+
+        del dictNumFreq
 
     def getlisttupleNoFreqSorted(self):
         return self.listtupleNoFreqSorted
@@ -74,6 +162,11 @@ class TableInningNo():
         return matchingcount, listmatchinning
 
     def getMod2Balance(self, listnos):
+        '''
+        숫자 6개를   MOd=2 을 적용시,
+        :param listnos:
+        :return:
+        '''
         listtemp = [ aa%2  for aa in listnos]
         countmod0 = listtemp.count(0)
         countmod1 = listtemp.count(1)
@@ -142,7 +235,7 @@ class TableInningNo():
         dicttemp["mod3"] = self.getMod3Balance(self.listlistinningnos[inning -1][1:])
         dicttemp["mod5"] = self.getMod5Balance(self.listlistinningnos[inning -1][1:])
         dicttemp["mod9"] = self.getMod9Balance(self.listlistinningnos[inning -1][1:])
-        dicttemp["modsum"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
+        dicttemp["modall"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
         return dicttemp
 
     def createlistdictModBalanceWithTable(self):
@@ -154,7 +247,7 @@ class TableInningNo():
             dicttemp["mod3"] = self.getMod3Balance(listinningnos[1:])
             dicttemp["mod5"] = self.getMod5Balance(listinningnos[1:])
             dicttemp["mod9"] = self.getMod9Balance(listinningnos[1:])
-            dicttemp["modsum"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
+            dicttemp["modall"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
             dicttemp["sum"] = sum(listinningnos[1:])
             listdictinningmods.append(dicttemp)
 
@@ -165,7 +258,7 @@ class TableInningNo():
 
     def writelistdictModBalanceWithTable(self, filecsv='modbal.csv'):
         f = open(filecsv, 'w')
-        f.write("inning,no1,no2,no3,no4,no5,no6,mod2,mod3,mod5,mod9,modsum,sum\n")
+        f.write("inning,no1,no2,no3,no4,no5,no6,mod2,mod3,mod5,mod9,modall,sum\n")
         leninningnos = len(self.listlistinningnos)
         for idx in range(leninningnos) :
             f.write(",".join([str(aa)for aa in self.listlistinningnos[idx] ]) + ",")
@@ -174,7 +267,7 @@ class TableInningNo():
             f.write(str(dicttemp["mod3"]) + ",")
             f.write(str(dicttemp["mod5"]) + ",")
             f.write(str(dicttemp["mod9"]) + ",")
-            f.write(str(dicttemp["modsum"]) + ",")
+            f.write(str(dicttemp["modall"]) + ",")
             f.write(str(dicttemp["sum"]) + "\n")
         f.close()
 
@@ -434,8 +527,268 @@ class TableInningNo():
 
         return ddictFreqListcombi
 
+class   MinNumFreq():
+    '''
+    6 숫자에서 가장 작은 숫자만의 빈도를 계산하고, 확률를 계산한다.
+    '''
+    def __init__(self, listlistinningnos):
+        self.dictMinnumFreq = collections.defaultdict(int)
+        self.listlistFreqMinnum = []
+        self.totalnum = len(listlistinningnos)
+        self.listEffectiveNum80 = []
+        for listinningnos in listlistinningnos:
+            self.dictMinnumFreq[listinningnos[1]] += 1
+
+        # [[freq, Minnum], [freq, Minnum],[freq, Minnum], ...] 을 생성및 sort
+        for minnum, freq in self.dictMinnumFreq.items():
+            self.listlistFreqMinnum.append([freq, minnum])
+
+        # sorting
+        self.listlistFreqMinnum = sorted(self.listlistFreqMinnum, key= lambda listfreqnum: listfreqnum[0], reverse=True)
+
+        # 누적하여 80%의 빈도에 해당하는 숫자만 유효한 것으로 판단하여, 그 해당하는 num list을 만든다.
+        maxaccum = self.totalnum * 0.8
+        accum = 0
+        for freq, minnum in self.listlistFreqMinnum :
+            if accum <= maxaccum :
+                self.listEffectiveNum80.append(minnum)
+            else :
+                break
+            accum += freq
+
+    def __str__(self):
+        outstring = ""
+        for FreqMinnum in self.listlistFreqMinnum:
+            outstring += str(FreqMinnum) + ",\n"
+        return outstring
+
+    def get_Minnum_Probability(self, Minnum):
+        # 만일 Minnum가 self.listEffectiveNum80 에 해당되지 않는다면, 0 을 return한다.
+        if not Minnum in self.listEffectiveNum80 :
+            return 0
+        freq = self.dictMinnumFreq.get(Minnum, 0 )
+        return freq / self.totalnum
+
+    def get_listEffectiveNum80(self):
+        return self.listEffectiveNum80
+
+class   MaxNumFreq():
+    '''
+    6 숫자에서 가장 큰 숫자만의 빈도를 계산하고, 확률를 계산한다.
+    '''
+    def __init__(self, listlistinningnos):
+        self.dictMaxnumFreq = collections.defaultdict(int)
+        self.listlistFreqMaxnum = []
+        self.totalnum = len(listlistinningnos)
+        self.listEffectiveNum80 = []
+        for listinningnos in listlistinningnos:
+            self.dictMaxnumFreq[listinningnos[-1]] += 1
+
+        # [[freq, Maxnum], [freq, Maxnum],[freq, Maxnum], ...] 을 생성및 sort
+        for Maxnum, freq in self.dictMaxnumFreq.items():
+            self.listlistFreqMaxnum.append([freq, Maxnum])
+
+        # sorting
+        self.listlistFreqMaxnum = sorted(self.listlistFreqMaxnum, key= lambda listfreqnum: listfreqnum[0], reverse=True)
+
+        # 누적하여 80%의 빈도에 해당하는 숫자만 유효한 것으로 판단하여, 그 해당하는 num list을 만든다.
+        maxaccum = self.totalnum * 0.8
+        accum = 0
+        for freq, Maxnum in self.listlistFreqMaxnum :
+            if accum <= maxaccum :
+                self.listEffectiveNum80.append(Maxnum)
+            else :
+                break
+            accum += freq
+
+    def __str__(self):
+        outstring = ""
+        for FreqMaxnum in self.listlistFreqMaxnum:
+            outstring += str(FreqMaxnum) + ",\n"
+        return outstring
+
+    def get_Maxnum_Probability(self, Maxnum):
+        # 만일 Maxnum가 self.listEffectiveNum80 에 해당되지 않는다면, 0 을 return한다.
+        if not Maxnum in self.listEffectiveNum80 :
+            return 0
+        freq = self.dictMaxnumFreq.get(Maxnum, 0 )
+        return freq / self.totalnum
+
+    def get_listEffectiveNum80(self):
+        return self.listEffectiveNum80
+
+class PrimeFreq():
+    '''
+    소수(prime number)에 대해 그 빈도수를 구하고,  확률를 구한다.
+    '''
+    def __init__(self, listlistinningnos):
+        self.listprime = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43]
+        self.dictPrimeFreq = collections.defaultdict(int)    # [[소수:발견된수],[소수:발견된수], ... ]
+        self.listlistFreqPrime = []                         # [[발견된수, 소수],[발견된수, 소수],...]
+        self.totalprime = 0         #  모든 inning에서 발견된 총 소수의 개수
+
+        # inning내에  솟수가 포함한 개수에 대한 통계 --> prime의 개수 패턴에 의한 확률을 구하고자 함.
+        self.listInningPrimeCount = [0, 0, 0, 0, 0, 0, 0]
+        # self.listInningPrimeCount[0]  : inning 내에 소수가 포함되지 않은 inning의 수.
+        # self.listInningPrimeCount[1]  : inning 내에 소수가 1개 포함한 inning의 수.
+
+        for listinningnos in listlistinningnos :
+            InningPrimeCount = 0
+            for no in listinningnos[1:] :
+                if no in self.listprime :
+                    self.dictPrimeFreq[no] += 1
+                    self.totalprime += 1
+                    InningPrimeCount += 1
+            self.listInningPrimeCount[InningPrimeCount] += 1
+
+        totalinning = len(listlistinningnos)
+        self.listInningPrimeCount = [ aa / totalinning for aa in self.listInningPrimeCount ]
+
+        # list을 만들고, sort한다.
+        for prime, freq in self.dictPrimeFreq.items() :
+            self.listlistFreqPrime.append([freq, prime])
+
+        # sort
+        self.listlistFreqPrime = sorted(self.listlistFreqPrime, key=lambda  listfreqprime: listfreqprime[0], reverse=True)
+
+    def __str__(self):
+        outstring = ""
+        for listFreqPrime in self.listlistFreqPrime :
+            outstring += str(listFreqPrime) + ",\n"
+        return outstring
+
+    def get_listlistFreqPrime(self):
+        return self.listlistFreqPrime
+
+    def getPrimeProbability(self, prime):
+        # 해당 prime에 해당하는  확률을 return.
+        if not prime in self.listprime :
+            return 0 ;
+        count = self.dictPrimeFreq[prime]
+        return count / self.totalprime
+
+    def getPrime6Probability(self, listnos):
+        '''
+        6 개 숫자에 대해, 솟수가 있다면, 해당 확률을 받아서  합을 return한다.
+        :param listnos:
+        :return:
+        '''
+        return sum([ self.getPrimeProbability(aa) for aa in listnos])
+
+    def getPrimeCountPatternProbability(self, listnos):
+        '''
+        listnos 내의 소수의 개수를 구하고, 해당 확률을 return한다.
+        :param listnos:
+        :return:
+        '''
+        primecount = [ aa in self.listprime for aa in listnos].count(True)
+        return self.listInningPrimeCount[primecount]
+
+    def get_listInningPrimeCount(self):
+        # inning별 발생한 소수의 개수에 대한 통계 return .
+        return self.listInningPrimeCount
 
 
+
+class   CombiCloseness():
+    def __init__(self, ncombi,listlistinningnos ):
+        '''
+        6개의 숫자에서 n개의 combination을 tuple로 정의하고, 각 inning에서
+        그 tuple이 반복해서 나타나는지 회수를 count하고, percentage을 반환한다.
+        :param ncombi:
+        :param listlistinningnos:
+        '''
+        self.ncombi = ncombi
+        self.dictTuplecombiCount = {}
+        self.combitotal = 0
+        self.listsortlistCountTuplecombi = []
+
+
+        dictTuplecombiCount = collections.defaultdict(int)
+        for  listinningnos in listlistinningnos :
+            for tuplecombi in itertools.combinations(listinningnos[1:],ncombi ) :
+                dictTuplecombiCount[tuplecombi] += 1
+
+        self.dictTuplecombiCount = dictTuplecombiCount
+        ## 총 combi의 total은 6가지 숫자에서 combi의 경우의 수에  총 inning 의 수의 곱이다.
+        self.combitotal = len([aa for aa in itertools.combinations(range(6), ncombi)]) * len(listlistinningnos)
+
+        ## dictTuplecombiCount을 이용해서 [[count, (combi)],[count, (combi)], ... ] 을 만든다.
+        ## 추가하여 count을 기준으로 sort을 한다.
+        listsortlistCountTuplecombi = []
+        for tuplecombi, count in dictTuplecombiCount.items():
+            listsortlistCountTuplecombi.append([count, tuplecombi])
+
+        self.listsortlistCountTuplecombi = sorted(listsortlistCountTuplecombi, key=lambda  listcounttuple: listcounttuple[0], reverse=True)
+        del listsortlistCountTuplecombi
+
+    def __str__(self):
+        outstring = ""
+        for listCountTuplecombi in self.listsortlistCountTuplecombi :
+            outstring += str(listCountTuplecombi) + ",\n"
+        return outstring
+
+    def getCombiProbability(self, tuplecombi):
+        '''
+        self.ncombi 개수의  listcombi에 해당하는 count 구하고 그 확률를 return한다.
+        :param
+        :return:
+        '''
+        if type(tuplecombi) != tuple :
+            raise Exception("Not match the list type")
+
+        if len(tuplecombi) != self.ncombi :
+            raise Exception("Not Match the combi count")
+
+        count = self.dictTuplecombiCount.get(tuplecombi, 0)
+        return count / self.combitotal
+
+    def getCombi6Probability(self, listcombi6):
+        '''
+        6개의 숫자 list을 받아서,  ncombi에 의한  재현 count을 확률로 반환한다.
+        :param listcombi6:
+        :return:
+        '''
+
+        if type(listcombi6) != list:
+            raise Exception("Not match the list type")
+
+        if len(listcombi6) != 6:
+            raise Exception("Not Match the combi count")
+
+        listcombi6.sort()
+
+        probtotal = 0
+        for tuplecombi in itertools.combinations(listcombi6, self.ncombi) :
+            probtotal += self.getCombiProbability(tuplecombi)
+
+        return probtotal
+
+    def getListSortlistCountTuplecombi(self):
+        return self.listsortlistCountTuplecombi
+
+    def getBestCombiFromGiven1(self, no):
+        '''
+        주어지는 하나의 숫자에 대해, 가장 확률이 놓은 best combi을 list으로 반환한다.
+        :param no:
+        :return:
+        '''
+        found = False
+        bestcount = 0
+        listtuple = []
+        for count, tuplecombi in self.listsortlistCountTuplecombi :
+            if no in tuplecombi :
+                if found == False : #처음 발견
+                    found = True
+                    bestcount = count
+                    listtuple.append(tuplecombi)
+                else :              # 계속 search중
+                    if bestcount == count :     # 추가 발견
+                        listtuple.append(tuplecombi)
+                    else:
+                        # 발생빈도가 더 낮은 것이 발견이 되었으므로, search stop한다.
+                        break
+        return listtuple
 
 
 
@@ -488,6 +841,8 @@ class Closeness():
             for tuplecombi in itertools.combinations(listweekno[1:], 2) :
                 self.putcloseness(tuplecombi[0], tuplecombi[1])
 
+
+    # --------------------------------------
     def createlistlistSortCloseness1to1(self):
         # sort Closeness1to1 according to closeness , and save to  self.listlistsortcloseness1to1
         listlistsortcloseness1to1 =[]
@@ -676,27 +1031,282 @@ class   CombiRestCloseness():
         return listtuplerest
 
 
+'''
+전략1)
+    . 6개의 숫자중 min 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - min
+    . 6개의 숫자중 max 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - max
+    . min max을 합하고, 이 중 2 숫자를 추출하여 combi2하고  combi2에 대해 closessness 구하여, 순위를 별로, 20% 에 드는 
+       combi2을 산출한다.
+    . 앞에서 combi2을 산출했으므로,  45개의 숫자 중에   min max에 해당하는 숫자범위를 제거한 나머지에 대해, combi4을 형성하고, 
+        combi4 closeness을 산출한다.   이 중에서, 상위 20%에 해당하는 combi4 을 선택한다. 
+    . for loop을 시행하면서 combi2, combi4의  조합으로 combi6을 형성하고, combi6에 대해    
+        get_Probability_from_dictNumFreq()      --> 각 숫자의 빈도수에 대한 확률의 합.
+        get_Modn_Probability(2, listcombi6)     --> mod 2을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(3, listcombi6)     --> mod 3을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(5, listcombi6)     --> mod 5을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(7, listcombi6)     --> mod 7을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(9, listcombi6)     --> mod 9을 했을 때, pattern에 의한 확률
+        getPrimeCountPatternProbability(listcombi6) --> 소수 발생빈도 pattern에 의한 확률
+        을 시행하고 나온 각 확률을 곱하여 나온 값으로 순위로 매기고, 최상위 10개만 print한다. 
+        
+전략2)
+    .전략1에서는 min max을 구하고, 이를 합쳐고 그 중 2숫자로 combi2을 형성하면,   min max의 조합으로 반드시
+        이루어 지지 않는다.   전략2에서는  min max 가 반드시 포함되도록  min, max에서 각각 한 개의 숫자를 선택하고,   
+    . combi4을 형성하는 것은 전략1의 방법으로 시햏한다.
+    . combi6을 형성하고 평가하는 것은 전략1의 방법으로 시행한다.      
+        
+전략3)
+    . 6개의 숫자중 min 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - min
+    . 6개의 숫자중 max 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - max
+    . min에서 가장 closeness가 좋은 숫자를 구한다.   --> minness 라 명명.  --> listminness을 구함.
+    . max에서 가장 closeness가 좋은 숫자를 구한다.   --> maxness라 명명.   --> listmaxness을 구함.
+    . 45개의 숫자에서  위의 min group을 빼고,  max group을 빼고,  minness을 빼고, maxness을 빼고, 나머지에서 
+       2 숫자를 추출하여 combi2을 만들고,   min minness max maxness combi2을 합하여 combi6을 만들고, 
+    . combi6에 대해
+        get_Probability_from_dictNumFreq()      --> 각 숫자의 빈도수에 대한 확률의 합.
+        get_Modn_Probability(2, listcombi6)     --> mod 2을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(3, listcombi6)     --> mod 3을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(5, listcombi6)     --> mod 5을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(7, listcombi6)     --> mod 7을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(9, listcombi6)     --> mod 9을 했을 때, pattern에 의한 확률
+        getPrimeCountPatternProbability(listcombi6) --> 소수 발생빈도 pattern에 의한 확률
+        을 시행하고 나온 각 확률을 곱하여 나온 값으로 순위로 매기고, 최상위 10개만 print한다. 
+            
+전략4)
+    . 6개의 숫자중 min 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - min
+    . 6개의 숫자중 max 숫자의  freq을 구하고,  그 중 순위별로 누적했을 때, 80%에 드는 숫자를  후보자로 선택 - max
+    . min에서 가장 closeness가 좋은 숫자를 구한다.   --> minness 라 명명.  --> listminness을 구함.
+    . max에서 가장 closeness가 좋은 숫자를 구한다.   --> maxness라 명명.   --> listmaxness을 구함.
+    . min, minness와 가장 closeness가 좋은 tuple을 구한다. 즉 (min, minness, minminness )
+    . max, maxness와 가장 closeness가 좋은 tuple을 구한다. 즉 (max, maxness, maxmaxness )
+    . (min, minness, minminness ) 와 (max, maxness, maxmaxness )을 합하여 combi6에 대해
+        get_Probability_from_dictNumFreq()      --> 각 숫자의 빈도수에 대한 확률의 합.
+        get_Modn_Probability(2, listcombi6)     --> mod 2을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(3, listcombi6)     --> mod 3을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(5, listcombi6)     --> mod 5을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(7, listcombi6)     --> mod 7을 했을 때, pattern에 의한 확률
+        get_Modn_Probability(9, listcombi6)     --> mod 9을 했을 때, pattern에 의한 확률
+        getPrimeCountPatternProbability(listcombi6) --> 소수 발생빈도 pattern에 의한 확률
+        을 시행하고 나온 각 확률을 곱하여 나온 값으로 순위로 매기고, 최상위 10개만 print한다.         
+'''
+
+
+
+
 if __name__ == "__main__":
+    '''
+    아래의 code은 전략3을 이용하여  후보를 산출한다.
+    '''
 
     tableinningno = TableInningNo("lotto.csv")
     listlistinningnos = tableinningno.getlistlistInningNos()      # 차수, 당첨번호 list
 
-    # tableinningno.writelisttupleNoFreqSorted()
-    # tableinningno.writelistdictModBalanceWithTable()
+    Stratey = 3
 
-    # print modbalance with all of inning
-    # listdictinningmods = tableinningno.getlistdictModBalanceWithTable()
-    # pprint.pprint(listdictinningmods, width=200)
+    if Stratey == 1 :
 
-    # 각 회차에서 같이 나왔던 회수 구하기.(친밀성 구하기 )
-    closeness = Closeness()
-    closeness.createCloseness1to1(listlistinningnos)
-    # print("closeness of two number ")
-    # print(closeness)
+        # 1) ------------------------------------------------------------------
+        # 각 inning중에, 최소 숫자에 대해, 그 빈도를 구하고, 빈도가 큰 것 부터 누적하여
+        #  80%에 해당하는 최소 숫자의 list을 구한다.
+        minnumfreq = MinNumFreq(listlistinningnos)
+        listEffectiveNum80_min = minnumfreq.get_listEffectiveNum80()
 
-    # 가장 높은 친밀도를 가진 2 숫자의 조합을 print.
-    # closeness.createlistlistSortCloseness1to1()
-    # pprint.pprint ( closeness.getlistlistSortCloseness1to1() )
+        # 2) ------------------------------------------------------------------
+        # 각 inning중에, 최대 숫자에 대해, 그 빈도를 구하고, 빈도가 큰 것 부터 누적하여
+        #  80%에 해당하는 최대 숫자의 list을 구한다.
+        maxnumfreq = MaxNumFreq(listlistinningnos)
+        listEffectiveNum80_max = maxnumfreq.get_listEffectiveNum80()
+
+        # 3) ------------------------------------------------------------------
+        # listEffectiveNum80_min, listEffectiveNum80_max 을 합치고,  2 숫자를 뽑아서
+        # 친밀도를 구하고,  sort 했을 때, 상위 20% 에 해당하는 combi을 구해본다.
+
+        ## combi 2 에 대해서, closeness을 만든다.
+        combi2closeness = CombiCloseness(2, listlistinningnos)
+        listEffectiveNum80_minmax = listEffectiveNum80_min + listEffectiveNum80_max
+        listEffectiveNum80_minmax.sort()
+        listlistClosenessTuplecombi2 = []
+        for tuplecombi2 in itertools.combinations(listEffectiveNum80_minmax, 2):
+            listlistClosenessTuplecombi2.append([combi2closeness.getCombiProbability(tuplecombi2), tuplecombi2])
+
+        # sort
+        listlistClosenessTuplecombi2 = sorted(listlistClosenessTuplecombi2, key=lambda listclose: listclose[0],
+                                              reverse=True)
+
+        # listlistClosenessTuplecombi2 중에서  상위 20% 만 모은다.
+        listlistClosenessTuplecombi2 = listlistClosenessTuplecombi2[0:int(len(listlistClosenessTuplecombi2) * 0.2)]
+
+        # 4) ------------------------------------------------------------------
+        # 6숫자 중에  2개를 구했으므로, 나머지 4개를  총 45개 중에서  combi4closeness 상위 20%에 해당하는 combi4를 구한다.
+
+        listcombi4candidate = list(set(range(1, MAXNO + 1)) - set(listEffectiveNum80_minmax))
+        listcombi4candidate.sort()
+
+        ## combi 4 에 대해서, closeness instantance 을 만든다.
+        combi4closeness = CombiCloseness(4, listlistinningnos)
+
+        # listcombi4candidate 에서 closeness가 좋은  상위 20%을 추출한다.
+        listlistProbTupleCombi4 =[]
+        for tuplecombi4 in itertools.combinations(listcombi4candidate, 4) :
+            listlistProbTupleCombi4.append([combi4closeness.getCombiProbability(tuplecombi4), tuplecombi4])
+
+        listlistProbTupleCombi4 = sorted(listlistProbTupleCombi4, key=lambda listProbTupleCombi4: listProbTupleCombi4[0], reverse=True)
+        listlistProbTupleCombi4 = listlistProbTupleCombi4[0:int(len(listlistProbTupleCombi4) * 0.2)]
+
+        ## 여기서는 listlistClosenessTuplecombi2, listlistProbTupleCombi4 가 구해진 상태이다.
+        ## combi2, combi4의 조합으로 combi6을 만들고, mod_N 의 확률를  계산하고, sort하고,  후보를 구한다.
+
+        primefreq = PrimeFreq(listlistinningnos)
+        listlistProbListcombi6 = []
+
+        looptotal = len(listlistClosenessTuplecombi2) * len(listlistProbTupleCombi4)
+        remainedlooptotal = looptotal
+        for closeness, tuplecombi2 in listlistClosenessTuplecombi2 :
+            for prob, tuplecomb4 in listlistProbTupleCombi4 :
+                remainedlooptotal -= 1
+                print("remained looptotal : %d"% remainedlooptotal)
+                listcombi6 = list(tuplecombi2) + list(tuplecomb4)
+                listcombi6.sort()
+
+                ## [1,2,3,4,5,6] 6개의 각각의 숫자에 대해 빈도수를 합산하여 percentage을 구한다.
+                no_freq_probability = tableinningno.get_Probability_from_dictNumFreq(listcombi6) * 100
+
+                ## [1,2,3,4,5,6] 6개의 숫자에 각각 mod n 을 실행하고, 빈도수를 key 패턴으로 할 때, 주어진 패턴 확률를 구한다.
+                mod2_probability = tableinningno.get_Modn_Probability(2, listcombi6) * 100
+                mod3_probability = tableinningno.get_Modn_Probability(3, listcombi6) * 100
+                mod5_probability = tableinningno.get_Modn_Probability(5, listcombi6) * 1000
+                mod7_probability = tableinningno.get_Modn_Probability(7, listcombi6) * 1000
+                mod9_probability = tableinningno.get_Modn_Probability(9, listcombi6) * 1000
+                primepattern_probability = primefreq.getPrimeCountPatternProbability(listcombi6) * 10
+
+                total_prob = no_freq_probability * mod2_probability * mod3_probability * mod5_probability * \
+                        mod7_probability * mod9_probability * primepattern_probability
+                listlistProbListcombi6.append([total_prob, listcombi6])
+
+
+        # sort
+        print("looptotal : %d" % looptotal)
+        print("sorting...")
+        listlistProbListcombi6 = sorted(listlistProbListcombi6, key=lambda listProbListcombi6: listProbListcombi6[0], reverse=True)
+
+        # 상위 10개 추출
+        listlistProbListcombi6 = listlistProbListcombi6[0:10]
+
+        #
+        pprint.pprint(listlistProbListcombi6)
+        '''
+        [[22632994.098827098, [5, 11, 16, 24, 27, 28]],
+         [21733930.120755, [5, 11, 24, 27, 28, 30]],
+         [20079872.630242936, [3, 9, 20, 25, 26, 42]],
+         [19925540.048664305, [7, 9, 18, 20, 31, 40]],
+         [19314225.80173182, [2, 14, 15, 31, 33, 34]],
+         [17235726.506940257, [1, 3, 9, 16, 20, 32]],
+         [17179377.159404814, [14, 15, 26, 27, 37, 38]],
+         [15326241.298750699, [9, 20, 21, 32, 37, 43]],
+         [14734010.318822956, [1, 9, 13, 24, 32, 40]],
+         [14386858.088470662, [6, 9, 19, 32, 35, 38]]]
+        '''
+
+        exit(0)
+
+    elif Stratey == 3 :
+
+        # 1) ------------------------------------------------------------------
+        # 각 inning중에, 최소 숫자에 대해, 그 빈도를 구하고, 빈도가 큰 것 부터 누적하여
+        #  80%에 해당하는 최소 숫자의 list을 구한다.
+        minnumfreq = MinNumFreq(listlistinningnos)
+        listEffectiveNum80_min = minnumfreq.get_listEffectiveNum80()
+
+        # 2) ------------------------------------------------------------------
+        # 각 inning중에, 최대 숫자에 대해, 그 빈도를 구하고, 빈도가 큰 것 부터 누적하여
+        #  80%에 해당하는 최대 숫자의 list을 구한다.
+        maxnumfreq = MaxNumFreq(listlistinningnos)
+        listEffectiveNum80_max = maxnumfreq.get_listEffectiveNum80()
+
+        # 3) ------------------------------------------------------------------
+        # listEffectiveNum80_min에 closeness가 좋은  (min,minness) list 을 구한다.
+
+        combi2closeness = CombiCloseness(2, listlistinningnos)
+        listtupleminness = []
+        for no in listEffectiveNum80_min :
+            listtupleminness += combi2closeness.getBestCombiFromGiven1(no)
+
+        # 4) ------------------------------------------------------------------
+        # listEffectiveNum80_max에 closeness가 좋은  (max,maxness) list 을 구한다.
+
+        listtuplemaxness = []
+        for no in listEffectiveNum80_max:
+            listtuplemaxness += combi2closeness.getBestCombiFromGiven1(no)
+
+        # 5) ------------------------------------------------------------------
+        # 45개의 숫자에서  위의 min group을 빼고,  max group을 빼고,  minness을 빼고, maxness을 빼고, 나머지에서
+        # 2 숫자를 추출하여 combi2을 만들고,   min minness max maxness combi2을 합하여 combi6을 만들고,
+
+        primefreq = PrimeFreq(listlistinningnos)
+        listlistProbListcombi6 = []
+
+        looptotal = len(listtupleminness) * len(listtuplemaxness)
+        remainedlooptotal = looptotal
+
+        for tupleminness in listtupleminness :
+            for tuplemaxness in listtuplemaxness :
+                # 먼저 45숫자에서 tupleminness, tuplemaxness 을 제거한다.
+                remainedlooptotal -= 1
+                print("remained looptotal : %d" % remainedlooptotal)
+
+                setcombi2candidate = set(range(1,MAXNO+1)) - set(listEffectiveNum80_min) - set(listEffectiveNum80_max) - \
+                    set(tupleminness) - set(tuplemaxness)
+                for tuplecombi2 in  itertools.combinations(setcombi2candidate, 2) :
+                    listcombi6 = list(tupleminness) + list(tuplemaxness) + list(tuplecombi2)
+                    listcombi6.sort()
+
+                    ## [1,2,3,4,5,6] 6개의 각각의 숫자에 대해 빈도수를 합산하여 percentage을 구한다.
+                    no_freq_probability = tableinningno.get_Probability_from_dictNumFreq(listcombi6) * 100
+
+                    ## [1,2,3,4,5,6] 6개의 숫자에 각각 mod n 을 실행하고, 빈도수를 key 패턴으로 할 때, 주어진 패턴 확률를 구한다.
+                    mod2_probability = tableinningno.get_Modn_Probability(2, listcombi6) * 100
+                    mod3_probability = tableinningno.get_Modn_Probability(3, listcombi6) * 100
+                    mod5_probability = tableinningno.get_Modn_Probability(5, listcombi6) * 1000
+                    mod7_probability = tableinningno.get_Modn_Probability(7, listcombi6) * 1000
+                    mod9_probability = tableinningno.get_Modn_Probability(9, listcombi6) * 1000
+                    primepattern_probability = primefreq.getPrimeCountPatternProbability(listcombi6) * 10
+
+                    total_prob = no_freq_probability * mod2_probability * mod3_probability * mod5_probability * \
+                                 mod7_probability * mod9_probability * primepattern_probability
+                    listlistProbListcombi6.append([total_prob, listcombi6])
+
+        # sort
+        print("looptotal : %d" % looptotal)
+        print("sorting...")
+        listlistProbListcombi6 = sorted(listlistProbListcombi6,
+                                        key=lambda listProbListcombi6: listProbListcombi6[0],
+                                        reverse=True)
+
+        # 상위 10개 추출
+        listlistProbListcombi6 = listlistProbListcombi6[0:10]
+
+        #
+        pprint.pprint(listlistProbListcombi6)
+        exit(0)
+
+        '''
+        [[27450711.28157679, [7, 17, 20, 33, 36, 39]],
+         [25332426.164360717, [7, 20, 31, 33, 36, 39]],
+         [20479814.74198086, [7, 8, 20, 31, 33, 39]],
+         [19943339.11865594, [3, 14, 19, 20, 25, 36]],
+         [17990709.305761784, [4, 17, 20, 21, 26, 43]],
+         [17945560.51062213, [1, 3, 9, 20, 26, 42]],
+         [17881839.65792056, [7, 8, 20, 26, 31, 39]],
+         [16067052.866889883, [4, 20, 21, 26, 37, 43]],
+         [14848255.562978264, [7, 20, 23, 26, 36, 39]],
+         [14637317.769698134, [3, 19, 20, 22, 36, 39]]]
+        '''
+    else :
+        print("--------------------------------------------------------")
+        print("----------------  Not yet implemented   ----------------")
+        exit(0)
+
+
 
 
     # combi에 대한  restn의 친밀도를 가진 classs을 생성한다. 혹은 file write한다.
