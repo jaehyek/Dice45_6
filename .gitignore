@@ -3,3 +3,4 @@
 *.wpu
 *.wpr
 /.idea/
+__pycache__/lotto.cpython-36.pyc
