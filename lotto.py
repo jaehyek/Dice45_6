@@ -11,12 +11,13 @@ class CLSVAR():
     def __init__(self):
         pass
 
-
 class TableInningNo():
     def __init__(self, filecsv):
         self.listlistinningnos = []         # [[inning, no1,on2,no3,no4,no5,no6],[...],...]
+
         self.listtupleNoFreqSorted = []     # [(no1, freq),(no2,freq),...]  sorted on freq
-        self.listdictinningmods = []        # [{inning,mod2,mod3,mod5,mod9,modsum, sum}, {...}, ...]
+                                            #  번호당 출현 회수를 저장
+                                            # 관련함수 : writelisttupleNoFreqSorted
 
         for line in open(filecsv):
             if len(line.split()) ==0 :
@@ -26,16 +27,23 @@ class TableInningNo():
 
         # sorting based on inning
         self.listlistinningnos = sorted(self.listlistinningnos, key=lambda listInningNos: listInningNos[0] )
-        self.createlistdictModBalanceWithTable()
-        self.createlisttupleNoFreqSorted()
+        self.createlisttupleNoFreqSorted()          # self.listtupleNoFreqSorted 을 생성한다.
 
     def getlistlistInningNos(self):
+        '''
+        listlistinningnos을 반환한다.
+        :return:
+        '''
         return self.listlistinningnos
 
-    def getNosWithInning(self, inning):
-        return self.listlistinningnos[inning-1][1:]
+    # Region : listtupleNoFreqSorted --------------------------------------------------------
+    # 숫자 1개에 대한 통계.
 
     def createlisttupleNoFreqSorted(self):
+        '''
+        45개의 숫자에 대한 발생빈도를 조사하여 sort하고, listtupleNoFreqSorted 에 저장한다.
+        :return:
+        '''
         dictNumFreq = {}
         for i in range(1,MAXNO+1 ):
             dictNumFreq[i] = 0
@@ -59,127 +67,57 @@ class TableInningNo():
             f.write(",".join([str(aa) for aa in tupleNoFreq]) + "\n")
         f.close()
 
-    def getMatchingCombiCount(self, listNos):
-        matchingcount = 0
-        listmatchinning = []
-        for listInningNos in self.listlistinningnos :
-            listbools = []
-            for no in listNos :
-                listbools.append(no in listInningNos[1:])
+    # Region : --------------------------------------------------------
+    # nCombi 1개에 대한 통계.
 
-            if all(listbools) :
-                matchingcount += 1
-                listmatchinning.append(listInningNos[0])
+    def  GetDictCombiFreq(self, nCombi):
+        '''
+        self.listlistinningnos을 활용하여 ,
+        6개의 숫자에서 추출된 combi 의 발생빈도를 계산한다.
 
-        return matchingcount, listmatchinning
+        :param nCombi:
+        :return:
+        '''
 
-    def getMod2Balance(self, listnos):
-        listtemp = [ aa%2  for aa in listnos]
-        countmod0 = listtemp.count(0)
-        countmod1 = listtemp.count(1)
-        return True if countmod0 == countmod1 else False
+        # count dict 을 생성 : key:combi, value=freq
+        cdictCombiFrequency = collections.Counter()
+        for listinningnos in self.listlistinningnos:
+            for tuplecombi in itertools.combinations(listinningnos[1:], nCombi):
+                cdictCombiFrequency[tuplecombi] += 1
 
-    def getMod3Balance(self, listnos):
-        listtemp = [ aa%3  for aa in listnos]
-        countmod0 = listtemp.count(0)
-        countmod1 = listtemp.count(1)
-        countmod2 = listtemp.count(2)
-        return True if countmod0 == countmod1 and countmod1 == countmod2 else False
+        return cdictCombiFrequency
 
-    def getMod5Balance(self, listnos):
-        listtemp = [ aa%5  for aa in listnos]
-        countmod0 = listtemp.count(0)
-        countmod1 = listtemp.count(1)
-        countmod2 = listtemp.count(2)
-        countmod3 = listtemp.count(3)
-        countmod4 = listtemp.count(4)
-        listcheck = []
-        listcheck.append(countmod0 in [1,2])
-        listcheck.append(countmod1 in [1,2])
-        listcheck.append(countmod2 in [1,2])
-        listcheck.append(countmod3 in [1])
-        listcheck.append(countmod4 in [1,2])
-        return True if all(listcheck) == True else False
+    def GetDictFreqListCombi(self, nCombi):
+        """
+        self.listlistinningnos을 활용하여 ,
+        6개의 숫자에서 추출된 combi 의 발생빈도를 계산한다.
 
-    def getMod9Balance(self, listnos):
-        listtemp = [ aa%5  for aa in listnos]
-        countmod0 = listtemp.count(0)
-        countmod1 = listtemp.count(1)
-        countmod2 = listtemp.count(2)
-        countmod3 = listtemp.count(3)
-        countmod4 = listtemp.count(4)
-        countmod5 = listtemp.count(5)
-        countmod6 = listtemp.count(6)
-        countmod7 = listtemp.count(7)
-        countmod8 = listtemp.count(8)
+        return 값은 defaultdict으로  key= 발생빈도, value=  combi의 list
 
-        listcheck = []
-        listcheck.append(countmod0 in [0,1])
-        listcheck.append(countmod1 in [0,1])
-        listcheck.append(countmod2 in [0,1])
-        listcheck.append(countmod3 in [0,1,2])
-        listcheck.append(countmod4 in [0,1,2])
-        listcheck.append(countmod5 in [0,1])
-        listcheck.append(countmod6 in [0,1])
-        listcheck.append(countmod7 in [0,1])
-        listcheck.append(countmod8 in [0,1])
+        :param nCombi: combination 숫자
+        :return: defaultdict으로  key= 발생빈도, value=  combi의 list
+        """
 
-        return True if all(listcheck) == True else False
-
-    def getModBalance(self, listnos):
-        listcheck=[]
-        listcheck.append(self.getMod2Balance(listnos))
-        listcheck.append(self.getMod3Balance(listnos))
-        listcheck.append(self.getMod5Balance(listnos))
-        listcheck.append(self.getMod9Balance(listnos))
-
-        return True if all(listcheck) == True else False
-
-    def getdictModBalanceWithInning(self, inning):
-        dicttemp = {}
-        dicttemp["inning"] = inning
-        dicttemp["mod2"] = self.getMod2Balance(self.listlistinningnos[inning -1][1:])
-        dicttemp["mod3"] = self.getMod3Balance(self.listlistinningnos[inning -1][1:])
-        dicttemp["mod5"] = self.getMod5Balance(self.listlistinningnos[inning -1][1:])
-        dicttemp["mod9"] = self.getMod9Balance(self.listlistinningnos[inning -1][1:])
-        dicttemp["modsum"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
-        return dicttemp
-
-    def createlistdictModBalanceWithTable(self):
-        listdictinningmods = []
+        # count dict 을 생성 : key:combi, value=freq
+        cdictCombiFrequency = collections.Counter()
         for listinningnos in self.listlistinningnos :
-            dicttemp = {}
-            dicttemp["inning"] = listinningnos[0]
-            dicttemp["mod2"] = self.getMod2Balance(listinningnos[1:])
-            dicttemp["mod3"] = self.getMod3Balance(listinningnos[1:])
-            dicttemp["mod5"] = self.getMod5Balance(listinningnos[1:])
-            dicttemp["mod9"] = self.getMod9Balance(listinningnos[1:])
-            dicttemp["modsum"] = all([dicttemp["mod2"],dicttemp["mod3"],dicttemp["mod5"],dicttemp["mod9"]])
-            dicttemp["sum"] = sum(listinningnos[1:])
-            listdictinningmods.append(dicttemp)
+            for tuplecombi in itertools.combinations ( listinningnos[1:], nCombi) :
+                cdictCombiFrequency[tuplecombi] += 1
 
-        self.listdictinningmods = listdictinningmods
 
-    def getlistdictModBalanceWithTable(self):
-        return self.listdictinningmods
+        # defaultdict 생성 :  key:freq  value= list[combi]
+        ddictFreqListcombi = collections.defaultdict(list)
+        for tuplecombifreq  in cdictCombiFrequency.items() :
+            tuplecombi, freq = tuplecombifreq
+            ddictFreqListcombi[freq].append(tuplecombi)
 
-    def writelistdictModBalanceWithTable(self, filecsv='modbal.csv'):
-        f = open(filecsv, 'w')
-        f.write("inning,no1,no2,no3,no4,no5,no6,mod2,mod3,mod5,mod9,modsum,sum\n")
-        leninningnos = len(self.listlistinningnos)
-        for idx in range(leninningnos) :
-            f.write(",".join([str(aa)for aa in self.listlistinningnos[idx] ]) + ",")
-            dicttemp = self.listdictinningmods[idx]
-            f.write(str(dicttemp["mod2"]) + ",")
-            f.write(str(dicttemp["mod3"]) + ",")
-            f.write(str(dicttemp["mod5"]) + ",")
-            f.write(str(dicttemp["mod9"]) + ",")
-            f.write(str(dicttemp["modsum"]) + ",")
-            f.write(str(dicttemp["sum"]) + "\n")
-        f.close()
+        return ddictFreqListcombi
 
+    # Region : --------------------------------------------------------
     def writeCombiMatchwithTable(self, combi, combiinside, combirest, clsvar, filecsv='combimatch.csv'):
         '''
+        목적 : combi-n이 다른 회에도 나타나는지 조사해서 파일에 write한다.
+
         :param combi: can be 3, 4,5 which means that 3 is (no1, no2, n3 ) in inning's numbers .
                      similarly 4 means (no1,no2,no3,no4) in inning's numbers .
                      similarly 5 means (no1,no2,no3,no4,no4) in inning's numbers.
@@ -399,46 +337,131 @@ class TableInningNo():
                             f.write(str(closeness)   + ",")
                 f.write("\n")
 
-
-
-
-
-
         f.close()
 
-    def getdictFreqListcombi(self, combi):
-        """
-        self.listlistinningnos을 활용하여 , 
-        6개의 숫자에서 추출된 combi 의 발생빈도를 계산한다.
-        return 값은 defaultdict으로  key= 발생빈도, value=  combi의 list
-        
-        cdictCombiFrequency : 저장소로,  type은 Dict type의 Counter.
-        setCombiFrequency : set type으로  빈도의 수자의 set.
-        
-        :param combi: combination 숫자
-        :return: defaultdict으로  key= 발생빈도, value=  combi의 list
-        """
-        cdictCombiFrequency = collections.Counter()
-        for listinningnos in self.listlistinningnos :
-            for tuplecombi in itertools.combinations ( listinningnos[1:], combi) :
-                cdictCombiFrequency[tuplecombi] += 1
+class InningModuleBalnace:
+    def _init__(self, listlistinningnos):
+        self.listlistinningnos = listlistinningnos
+        self.listdictinningmods = []  # [{inning,mod2balance,mod3balance,mod5balance,mod9balance,modsumbalance, sum}, {...}, ...]
 
-        # calculate the kind of combiFrequency
-        setCombiFrequency = set(cdictCombiFrequency.values())
-        # print(setCombiFrequency)
+        self.CreateListDictModBalance()  # self.listdictinningmods 을 생성한다.
+        # 회차별  2,3,5,9 modulation 의 balance을  list을 저장되어 있다.
+        # 관련 함수 : getlistdictModBalanceWithTable, writelistdictModBalanceWithTable
 
-        ddictFreqListcombi = collections.defaultdict(list)
-        for tuplecombifreq  in cdictCombiFrequency.items() :
-            tuplecombi, freq = tuplecombifreq
-            ddictFreqListcombi[freq].append(tuplecombi)
+    def getMod2Balance(self, listnos):
+        '''
+        받은 번호들을 각각  2 modulation했을 때,  modulation 종류 별로 같은 수의 개수가 있다면 balance가 되었다고 true을 return한다.
+        :param listnos:
+        :return:
+        '''
+        listtemp = [aa % 2 for aa in listnos]
+        countmod0 = listtemp.count(0)
+        countmod1 = listtemp.count(1)
+        return True if countmod0 == countmod1 else False
 
-        return ddictFreqListcombi
+    def getMod3Balance(self, listnos):
+        '''
+        받은 번호들을 각각  3 modulation했을 때,  modulation 종류 별로 같은 수의 개수가 있다면 balance가 되었다고 true을 return한다.
+        :param listnos:
+        :return:
+        '''
+        listtemp = [aa % 3 for aa in listnos]
+        countmod0 = listtemp.count(0)
+        countmod1 = listtemp.count(1)
+        countmod2 = listtemp.count(2)
+        return True if countmod0 == countmod1 and countmod1 == countmod2 else False
 
+    def getMod5Balance(self, listnos):
+        listtemp = [aa % 5 for aa in listnos]
+        countmod0 = listtemp.count(0)
+        countmod1 = listtemp.count(1)
+        countmod2 = listtemp.count(2)
+        countmod3 = listtemp.count(3)
+        countmod4 = listtemp.count(4)
+        listcheck = []
+        listcheck.append(countmod0 in [1, 2])
+        listcheck.append(countmod1 in [1, 2])
+        listcheck.append(countmod2 in [1, 2])
+        listcheck.append(countmod3 in [1])
+        listcheck.append(countmod4 in [1, 2])
+        return True if all(listcheck) == True else False
 
+    def getMod9Balance(self, listnos):
+        listtemp = [aa % 5 for aa in listnos]
+        countmod0 = listtemp.count(0)
+        countmod1 = listtemp.count(1)
+        countmod2 = listtemp.count(2)
+        countmod3 = listtemp.count(3)
+        countmod4 = listtemp.count(4)
+        countmod5 = listtemp.count(5)
+        countmod6 = listtemp.count(6)
+        countmod7 = listtemp.count(7)
+        countmod8 = listtemp.count(8)
 
+        listcheck = []
+        listcheck.append(countmod0 in [0, 1])
+        listcheck.append(countmod1 in [0, 1])
+        listcheck.append(countmod2 in [0, 1])
+        listcheck.append(countmod3 in [0, 1, 2])
+        listcheck.append(countmod4 in [0, 1, 2])
+        listcheck.append(countmod5 in [0, 1])
+        listcheck.append(countmod6 in [0, 1])
+        listcheck.append(countmod7 in [0, 1])
+        listcheck.append(countmod8 in [0, 1])
 
+        return True if all(listcheck) == True else False
 
+    def CreateListDictModBalance(self):
+        '''
+        회차별  2,3,5,9 modulation의 balance 결과를  listdict type으로  반환한다.
+        :return:
+        '''
+        listdictinningmods = []
+        for listinningnos in self.listlistinningnos:
+            dicttemp = {}
+            dicttemp["inning"] = listinningnos[0]
+            dicttemp["mod2"] = self.getMod2Balance(listinningnos[1:])
+            dicttemp["mod3"] = self.getMod3Balance(listinningnos[1:])
+            dicttemp["mod5"] = self.getMod5Balance(listinningnos[1:])
+            dicttemp["mod9"] = self.getMod9Balance(listinningnos[1:])
+            dicttemp["modsum"] = all([dicttemp["mod2"], dicttemp["mod3"], dicttemp["mod5"], dicttemp["mod9"]])
+            dicttemp["sum"] = sum(listinningnos[1:])
+            listdictinningmods.append(dicttemp)
 
+        self.listdictinningmods = listdictinningmods
+
+    def GetListDictInningModuleBance(self):
+        return self.listdictinningmods
+
+    def WriteListDictModBalanceWithTable(self, filecsv='modbal.csv'):
+        f = open(filecsv, 'w')
+        f.write("inning,no1,no2,no3,no4,no5,no6,mod2,mod3,mod5,mod9,modsum,sum\n")
+        leninningnos = len(self.listlistinningnos)
+        for idx in range(leninningnos):
+            f.write(",".join([str(aa) for aa in self.listlistinningnos[idx]]) + ",")
+            dicttemp = self.listdictinningmods[idx]
+            f.write(str(dicttemp["mod2"]) + ",")
+            f.write(str(dicttemp["mod3"]) + ",")
+            f.write(str(dicttemp["mod5"]) + ",")
+            f.write(str(dicttemp["mod9"]) + ",")
+            f.write(str(dicttemp["modsum"]) + ",")
+            f.write(str(dicttemp["sum"]) + "\n")
+        f.close()
+
+class CombiFrom45:
+    def _init__(self ):
+        return
+
+    def GetListCombiFrom45(self, nCombi):
+        '''
+        45개의 숫자에서  nCombi 조합에 해당하는 combination을 만들어 반환한다.
+        :param nCombi:
+        :return:
+        '''
+        listtuplecombi = []
+        for tuplecombi in itertools.combinations(range(1, MAXNO+1), nCombi):
+            listtuplecombi.append(tuplecombi)
+        return listtuplecombi
 
 
 
@@ -638,8 +661,8 @@ class   CombiRestCloseness():
     def getlistbestrest(self, listcombi):
         """
         listcombi에 가장 closeness가 좋은 listrest을 찾아서 return 한다.
-        :param listcombi: 
-        :return: 
+        :param listcombi:
+        :return:
         """
         if not hasattr(self, "listcombinrestnclosesorted") :
             print("listcombinrestnclosesorted is not exist")
@@ -655,10 +678,10 @@ class   CombiRestCloseness():
 
     def getlisttupleSubordinateRest(self, listcombi):
         """
-        최상의 closeness보다 1이 작은 closeness을 가지는 (listcombi, listrest) pair중에 
-        parameter의 listcombi에 pair인 rest의 list을 구하고 return한다. 
+        최상의 closeness보다 1이 작은 closeness을 가지는 (listcombi, listrest) pair중에
+        parameter의 listcombi에 pair인 rest의 list을 구하고 return한다.
         :param listcombi: 찾을 combi list
-        :return: 
+        :return:
         """
 
         if self.combin != len(listcombi) :
@@ -678,235 +701,3 @@ class   CombiRestCloseness():
 
         return listtuplerest
 
-
-if __name__ == "__main__":
-
-    tableinningno = TableInningNo("lotto.csv")
-    listlistinningnos = tableinningno.getlistlistInningNos()      # 차수, 당첨번호 list
-
-    # tableinningno.writelisttupleNoFreqSorted()
-    # tableinningno.writelistdictModBalanceWithTable()
-
-    # print modbalance with all of inning
-    # listdictinningmods = tableinningno.getlistdictModBalanceWithTable()
-    # pprint.pprint(listdictinningmods, width=200)
-
-    # 각 회차에서 같이 나왔던 회수 구하기.(친밀성 구하기 )
-    closeness = Closeness()
-    closeness.createCloseness1to1(listlistinningnos)
-    # print("closeness of two number ")
-    # print(closeness)
-
-    # 가장 높은 친밀도를 가진 2 숫자의 조합을 print.
-    # closeness.createlistlistSortCloseness1to1()
-    # pprint.pprint ( closeness.getlistlistSortCloseness1to1() )
-
-
-    # combi에 대한  restn의 친밀도를 가진 classs을 생성한다. 혹은 file write한다.
-    # 시사점 : 최고의 친밀도를 가진 combi와 restn을 다시 발생할 가능성이 없는 것이다.
-    # 이를 활용해서,  후보 숫자들을 filter할 수 있다.
-    combi1rest1close = CombiRestCloseness(listlistinningnos, 1, 1)
-    # combi1rest1close.writecombirestclose()
-
-    combi2rest1close = CombiRestCloseness(listlistinningnos, 2, 1)
-    # combi2rest1close.writecombirestclose()
-
-    combi2rest2close = CombiRestCloseness(listlistinningnos, 2, 2)
-    # combi2rest2close.writecombirestclose()
-
-    combi3rest2close = CombiRestCloseness(listlistinningnos, 3, 2)
-    # combi3rest2close.writecombirestclose()
-
-    combi3rest1close = CombiRestCloseness(listlistinningnos, 3, 1)
-    # combi3rest1close.writecombirestclose()
-
-    combi4rest1close = CombiRestCloseness(listlistinningnos, 4, 1)
-    # combi4rest1close.writecombirestclose()
-
-
-    # 공통 class을 만들어서  변수들을 저장한다.
-    clsvar = CLSVAR()
-
-    # 후보 숫자들을  filter할 수 있는  class들을 저장한다.
-    clsvar.combi1rest1close = combi1rest1close
-    clsvar.combi2rest1close = combi2rest1close
-    clsvar.combi2rest2close = combi2rest2close
-    clsvar.combi3rest2close = combi3rest2close
-    clsvar.combi3rest1close = combi3rest1close
-    clsvar.combi4rest1close = combi4rest1close
-
-    #-------------------------------------------------------------------------
-    # combi5가 일어나는 경우에 대해 발생회수별로  조사한다.
-    ddictFreqListcombi5 = tableinningno.getdictFreqListcombi(5)
-    combi5MaxFreq = max(ddictFreqListcombi5.keys())
-    print("Combi=5, max = %s" % combi5MaxFreq)
-
-    # combi5MaxFreq가 max이기 때문에 다음의 경우 combi5MaxFreq + 1 인 경우가 발생하지 않는다.
-    # 즉 combi5MaxFreq -1 에 해당하는 group 이 다음에 일어날 후보이다.
-    candidate_listcombi5 = ddictFreqListcombi5[combi5MaxFreq-1]
-
-    pprint.pprint(len(candidate_listcombi5))
-
-    # -------------------------------------------------------------------------
-    # combi=4 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
-    ddictFreqListcombi4 = tableinningno.getdictFreqListcombi(4)
-    combi4MaxFreq = max(ddictFreqListcombi4.keys())
-
-    # combi4MaxFreq가  max이기 때문에 다음의 경우 combi4MaxFreq + 1 인 경우가 발생하지 않는다.
-    # 즉 candidate_listcombi5 에서  combi4MaxFreq인 경우을  제거 한다.
-    notcandidate_listcombi4 = ddictFreqListcombi4[combi4MaxFreq]
-
-    diff_combi5 = []
-    for combi5t in candidate_listcombi5 :
-        for combi4t in notcandidate_listcombi4 :
-            if( set(combi4t).issubset(combi5t)):
-                diff_combi5.append(combi5t)
-
-    candidate_listcombi5 = list( set(candidate_listcombi5) - set(diff_combi5))
-    pprint.pprint(len(candidate_listcombi5))
-
-    # 반대로, combi4MaxFreq-1 의 경우는   오히려 잘 나타나는 경우이므로 이를 candidate_listcombi5 에서 찾는다.
-    candidate_listcombi4 = ddictFreqListcombi4[combi4MaxFreq-1]
-
-    diff_combi5 = []
-    for combi5t in candidate_listcombi5:
-        for combi4t in candidate_listcombi4:
-            if (set(combi4t).issubset(combi5t)):
-                diff_combi5.append(combi5t)
-
-    candidate_listcombi5 = diff_combi5
-    pprint.pprint(len(candidate_listcombi5))
-
-    # -------------------------------------------------------------------------
-    # combi=3 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
-    ddictFreqListcombi3 = tableinningno.getdictFreqListcombi(3)
-    combi3MaxFreq = max(ddictFreqListcombi3.keys())
-
-    # combi3MaxFreq 가  max이기 때문에 다음의 경우 combi3MaxFreq + 1 인 경우가 발생하지 않는다.
-    # 즉 candidate_listcombi5 에서  combi3MaxFreq 인 경우을  제거 한다.
-    notcandidate_listcombi3 = ddictFreqListcombi3[combi3MaxFreq]
-
-    diff_combi5 = []
-    for combi5t in candidate_listcombi5:
-        for combi3t in notcandidate_listcombi3:
-            if (set(combi3t).issubset(combi5t)):
-                diff_combi5.append(combi5t)
-
-    candidate_listcombi5 = list(set(candidate_listcombi5) - set(diff_combi5))
-    pprint.pprint(len(candidate_listcombi5))
-
-    # 반대로, combi3MaxFreq-1 의 경우는   오히려 잘 나타나는 경우이므로 이를 candidate_listcombi5 에서 찾는다.
-    candidate_listcombi3 = ddictFreqListcombi3[combi3MaxFreq - 1]
-
-    diff_combi5 = []
-    for combi5t in candidate_listcombi5:
-        for combi3t in candidate_listcombi3:
-            if (set(combi3t).issubset(combi5t)):
-                diff_combi5.append(combi5t)
-
-    candidate_listcombi5 = diff_combi5
-    pprint.pprint(len(candidate_listcombi5))
-
-    #---------------------------------------------------------------------
-    # combi=2 경우에 대해, 각각 출현빈도에 대한 combi list을 구한다.
-    ddictFreqListcombi2 = tableinningno.getdictFreqListcombi(2)
-    combi2MaxFreq = max(ddictFreqListcombi2.keys())
-
-    # combi3MaxFreq 가  max이기 때문에 다음의 경우 combi3MaxFreq + 1 인 경우가 발생하지 않는다.
-    # 즉 candidate_listcombi5 에서  combi3MaxFreq 인 경우을  제거 한다.
-    notcandidate_listcombi2 = ddictFreqListcombi2[combi2MaxFreq]
-
-    diff_combi5 = []
-    for combi5t in candidate_listcombi5:
-        for combi2t in notcandidate_listcombi2:
-            if (set(combi2t).issubset(combi5t)):
-                diff_combi5.append(combi5t)
-
-    candidate_listcombi5 = list(set(candidate_listcombi5) - set(diff_combi5))
-    pprint.pprint(len(candidate_listcombi5))
-
-    # 반대로, combi3MaxFreq-1 의 경우는   오히려 잘 나타나는 경우이므로 이를 candidate_listcombi5 에서 찾는다.
-    candidate_listcombi2 = ddictFreqListcombi2[combi2MaxFreq - 1]
-
-    diff_combi5 = []
-    for combi5t in candidate_listcombi5:
-        for combi2t in candidate_listcombi2:
-            if (set(combi2t).issubset(combi5t)):
-                diff_combi5.append(combi5t)
-
-    candidate_listcombi5 = diff_combi5
-    pprint.pprint(len(candidate_listcombi5))
-    pprint.pprint(candidate_listcombi5)
-    print("----- candidate_listcombi5 is finished ----")
-
-    # ---------------------------------------------------------------------
-    # 이제 candidate_listcombi5 에는 3개의 후보가 존재한다.  2018.8.25일 기준으로 .
-    # 지금 부터,  1:1의 closeness 을 계산해서 큰 closeness을 선택한다.
-
-    # 먼저 combi5에 각각에 해당하는 inning의 전체 숫자 6개를  45개의 숫자에서 제거된 closeness 후보 숫자를 구한다.
-    dictlistcombi5listcloseness1 = {}
-    for listinningnos in listlistinningnos :
-        nos = listinningnos[1:]
-        inning = listinningnos[0]
-        for combi5 in candidate_listcombi5 :
-            if set(combi5).issubset(set(nos)) :
-                print("inning:%d"% inning)
-                candidate_listno = list(set([ aa for aa in range(1,46)]) - set(nos))
-                dictlistcombi5listcloseness1[combi5] = candidate_listno
-
-    # dictlistcombi5listcloseness1 에는 { [combi5]:[39개의 후보숫자], ... }
-
-    # listcloseness1 중에 가장 큰 1:1 closeness 값을 갖는 숫자 list을 찾는다.
-    dictlistcombi5listcloseness1_tmp = {}
-    for listcombi5, listcloseness1 in dictlistcombi5listcloseness1.items() :
-        dict_no_sumcloseness = {}
-        for candidate_no in listcloseness1 :
-            sum = 0
-            for  combi in itertools.combinations(listcombi5, 1 ) :
-                sum = sum + combi1rest1close.getcloseness(list(combi),[candidate_no] )
-            dict_no_sumcloseness[candidate_no] = sum
-        maxcloseness = max(dict_no_sumcloseness.values())
-        # maxclose에 해당하는 candiate no을 모은다.
-        listmaxcloseno = [ no for no, sum in dict_no_sumcloseness.items() if sum == maxcloseness ]
-        dictlistcombi5listcloseness1_tmp[listcombi5] = listmaxcloseno
-
-    dictlistcombi5listcloseness1 = dictlistcombi5listcloseness1_tmp
-
-    # dictlistcombi5listcloseness1 에는 { [combi5]:[1 or 2개의 후보숫자], ... }
-    # 후보수자 2개 이상이면  combi2rest1close에서 찾아서  1개의 후보를 찾는다.
-
-    dictlistcombi5listcloseness1_tmp = {}
-    for listcombi5, listcloseness1 in dictlistcombi5listcloseness1.items():
-        if(len(listcloseness1) == 1 ):
-            dictlistcombi5listcloseness1_tmp[listcombi5] = listcloseness1
-            continue
-        dict_no_sumcloseness = {}
-        for candidate_no in listcloseness1:
-            sum = 0
-            for combi in itertools.combinations(listcombi5, 2):
-                sum = sum + combi2rest1close.getcloseness(list(combi), [candidate_no])
-            dict_no_sumcloseness[candidate_no] = sum
-        maxcloseness = max(dict_no_sumcloseness.values())
-        # maxclose에 해당하는 candiate no을 모은다.
-        listmaxcloseno = [no for no, sum in dict_no_sumcloseness.items() if sum == maxcloseness]
-        dictlistcombi5listcloseness1_tmp[listcombi5] = listmaxcloseno
-
-    dictlistcombi5listcloseness1 = dictlistcombi5listcloseness1_tmp
-
-    # 이제 combi5에 대한 1 숫자를 다 구했다.
-    # print한다.
-
-    for tuplecombi5, listcloseness1 in dictlistcombi5listcloseness1.items() :
-        combi6 = list(tuplecombi5) + listcloseness1
-        combi6.sort()
-        print(combi6)
-
-
-    exit(0)
-
-'''
-최종 후보 숫자들. 2018.8.25
-[14, 15, 25, 31, 34, 44]
-[10, 18, 26, 31, 34, 44]
-[10, 13, 26, 31, 34, 44]
-'''
