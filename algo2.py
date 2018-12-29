@@ -37,7 +37,7 @@ def MappingCombi3ToPlate45(nCombi):
 
 
 if __name__ == "__main__":
-    MappingCombi3ToPlate45(4)
+    MappingCombi3ToPlate45(3)
 
 '''
 Combination : 3
