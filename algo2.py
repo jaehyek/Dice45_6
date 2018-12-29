@@ -7,10 +7,10 @@ def MappingCombi3ToPlate45(nCombi):
     tableinningno = TableInningNo("lotto.csv")
 
     # nCombi 일어나는 경우에 대해 발생회수별로  조사한다.
-    dictCombi5Freq = tableinningno.GetDictCombiFreq(nCombi)
+    dictnCombiFreq = tableinningno.GetDictCombiFreq(nCombi)
 
     totalCombiNO = len(listtuplecombifrom45)
-    freqCombiNo = len(dictCombi5Freq)
+    freqCombiNo = len(dictnCombiFreq)
 
     print("Combination : %d"%nCombi)
     print("Total Combi NO : %d" % totalCombiNO )
@@ -23,29 +23,21 @@ def MappingCombi3ToPlate45(nCombi):
         print("freq:%d, len:%d"%(freq, len(listCombi)))
 
     print("-----------------------------------------------------------------")
-    # draw the freq map of combiFrom45
-    lenAxis = MAXNO - nCombi + 1
-    tmpAxis = lenAxis
-    dimenstion = 1          # combi=3  일때,  combi=4이면  4 dimension이 된다.
-    linebegin = 1
-    for tuplecombi in listtuplecombifrom45 :
-        if(linebegin == 1 ):
+
+    Found45 = 1 ;       #처음이거나, tuple에서 마지막 45 숫자를 발견했을 경우.
+    for tuplecombi in listtuplecombifrom45:
+        # 처음이므로, tuple을 print한다.
+        if( Found45 == 1 ):
             print(tuplecombi, end=": ")
-            linebegin = 0
-        print("%02d,"%dictCombi5Freq[tuplecombi], end="")
-        tmpAxis -= 1
-        if(tmpAxis == 0 ) :
+            Found45 = 0
+        print("%02d," % dictnCombiFreq.get(tuplecombi, 0 ), end="")
+        if( 45 in tuplecombi):
             print("\n", end="")
-            linebegin =1
-            lenAxis -= 1
-            if(lenAxis == 0 ):
-                lenAxis = MAXNO - nCombi + 1 - dimenstion
-                dimenstion += 1
-            tmpAxis = lenAxis
+            Found45 = 1
 
 
 if __name__ == "__main__":
-    MappingCombi3ToPlate45(3)
+    MappingCombi3ToPlate45(4)
 
 '''
 Combination : 3
